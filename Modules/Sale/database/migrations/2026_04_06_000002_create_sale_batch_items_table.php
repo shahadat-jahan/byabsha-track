@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('sale_batch_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sale_id')->constrained('sales')->cascadeOnDelete();
+            $table->foreignId('restock_id')->constrained('restocks')->restrictOnDelete();
+            $table->unsignedInteger('quantity');
+            $table->decimal('purchase_price_per_unit', 12, 2);
+            $table->timestamps();
+
+            $table->index('sale_id');
+            $table->index('restock_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sale_batch_items');
+    }
+};

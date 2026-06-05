@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'স্টক ওভারভিউ',
+    'subtitle' => 'প্রতিটি দোকানের বর্তমান ইনভেন্টরি আলাদাভাবে দেখুন।',
+    'manage_products' => 'পণ্য পরিচালনা',
+    'filter_title' => 'ফিল্টার',
+    'shop' => 'দোকান',
+    'all_shops' => 'সব দোকান',
+    'apply_filter' => 'ফিল্টার প্রয়োগ',
+    'total_products' => 'মোট পণ্য',
+    'total_units' => 'মোট ইউনিট',
+    'stock_value' => 'স্টক মূল্য',
+    'low_stock' => 'লো স্টক',
+    'out_of_stock' => 'স্টক শেষ',
+    'stock_table_title' => 'পণ্যের স্টক তালিকা',
+    'product' => 'পণ্য',
+    'created_by' => 'তৈরি করেছেন',
+    'category' => 'ক্যাটাগরি',
+    'brand' => 'ব্র্যান্ড',
+    'purchase_price' => 'ক্রয় মূল্য',
+    'sale_price' => 'বিক্রয় মূল্য',
+    'current_stock' => 'বর্তমান স্টক',
+    'out' => 'শেষ',
+    'deleted_shop' => 'মুছে ফেলা দোকান',
+    'no_products' => 'কোনো পণ্য পাওয়া যায়নি',
+    'no_products_subtitle' => 'এই ফিল্টারে কোনো স্টক রেকর্ড নেই।',
+];

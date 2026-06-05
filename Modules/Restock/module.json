@@ -1,0 +1,11 @@
+{
+    "name": "Restock",
+    "alias": "restock",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Restock\\Providers\\RestockServiceProvider"
+    ],
+    "files": []
+}

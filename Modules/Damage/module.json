@@ -1,0 +1,11 @@
+{
+    "name": "Damage",
+    "alias": "damage",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Damage\\Providers\\DamageServiceProvider"
+    ],
+    "files": []
+}

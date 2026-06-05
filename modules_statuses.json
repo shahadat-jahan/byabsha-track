@@ -1,0 +1,19 @@
+{
+    "Auth": true,
+    "Capital": true,
+    "Brand": true,
+    "Category": true,
+    "Dashboard": true,
+    "Landing": true,
+    "Product": true,
+    "Report": true,
+    "Sale": true,
+    "Shop": true,
+    "Restock": true,
+    "Damage": true,
+    "User": true,
+    "Settings": true,
+    "Stock": true,
+    "Branch": true,
+    "Subscription": true
+}

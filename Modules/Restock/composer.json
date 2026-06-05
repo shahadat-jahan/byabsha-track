@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/restock",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Restock\\": "",
+            "Modules\\Restock\\Database\\Factories\\": "database/factories/",
+            "Modules\\Restock\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Restock\\Tests\\": "tests/"
+        }
+    }
+}

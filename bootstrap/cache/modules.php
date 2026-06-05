@@ -1,0 +1,45 @@
+<?php return array (
+  'providers' => 
+  array (
+    0 => 'Modules\\Branch\\Providers\\BranchServiceProvider',
+    1 => 'Modules\\Brand\\Providers\\BrandServiceProvider',
+    2 => 'Modules\\Capital\\Providers\\CapitalServiceProvider',
+    3 => 'Modules\\Category\\Providers\\CategoryServiceProvider',
+    4 => 'Modules\\Damage\\Providers\\DamageServiceProvider',
+    5 => 'Modules\\Dashboard\\Providers\\DashboardServiceProvider',
+    6 => 'Modules\\Product\\Providers\\ProductServiceProvider',
+    7 => 'Modules\\Report\\Providers\\ReportServiceProvider',
+    8 => 'Modules\\Restock\\Providers\\RestockServiceProvider',
+    9 => 'Modules\\Sale\\Providers\\SaleServiceProvider',
+    10 => 'Modules\\Settings\\Providers\\SettingsServiceProvider',
+    11 => 'Modules\\Shop\\Providers\\ShopServiceProvider',
+    12 => 'Modules\\Stock\\Providers\\StockServiceProvider',
+    13 => 'Modules\\Subscription\\Providers\\SubscriptionServiceProvider',
+    14 => 'Modules\\User\\Providers\\UserServiceProvider',
+    15 => 'Modules\\Landing\\Providers\\LandingServiceProvider',
+    16 => 'Modules\\Auth\\Providers\\AuthServiceProvider',
+  ),
+  'eager' => 
+  array (
+    0 => 'Modules\\Branch\\Providers\\BranchServiceProvider',
+    1 => 'Modules\\Brand\\Providers\\BrandServiceProvider',
+    2 => 'Modules\\Capital\\Providers\\CapitalServiceProvider',
+    3 => 'Modules\\Category\\Providers\\CategoryServiceProvider',
+    4 => 'Modules\\Damage\\Providers\\DamageServiceProvider',
+    5 => 'Modules\\Dashboard\\Providers\\DashboardServiceProvider',
+    6 => 'Modules\\Product\\Providers\\ProductServiceProvider',
+    7 => 'Modules\\Report\\Providers\\ReportServiceProvider',
+    8 => 'Modules\\Restock\\Providers\\RestockServiceProvider',
+    9 => 'Modules\\Sale\\Providers\\SaleServiceProvider',
+    10 => 'Modules\\Settings\\Providers\\SettingsServiceProvider',
+    11 => 'Modules\\Shop\\Providers\\ShopServiceProvider',
+    12 => 'Modules\\Stock\\Providers\\StockServiceProvider',
+    13 => 'Modules\\Subscription\\Providers\\SubscriptionServiceProvider',
+    14 => 'Modules\\User\\Providers\\UserServiceProvider',
+    15 => 'Modules\\Landing\\Providers\\LandingServiceProvider',
+    16 => 'Modules\\Auth\\Providers\\AuthServiceProvider',
+  ),
+  'deferred' => 
+  array (
+  ),
+);

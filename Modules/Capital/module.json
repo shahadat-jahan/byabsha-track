@@ -1,0 +1,11 @@
+{
+    "name": "Capital",
+    "alias": "capital",
+    "description": "Capital management module",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Capital\\Providers\\CapitalServiceProvider"
+    ],
+    "files": []
+}
