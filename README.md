@@ -71,6 +71,7 @@ Data isolation is **user-scoped**: every query filters by `user_id` / `shop_id`.
 | PDF | `barryvdh/laravel-dompdf` v3.1 |
 | Auth | Laravel Sanctum (API routes) |
 | Testing | Pest v4 |
+| Code Style | Laravel Pint |
 
 ---
 
