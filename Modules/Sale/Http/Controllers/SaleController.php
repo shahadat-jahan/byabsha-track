@@ -341,6 +341,7 @@ class SaleController extends Controller
 
                 $this->productBatchService->consumeBatch($batch, $quantity);
                 $this->warrantyExchangeService->syncAutoWarrantyForSale($sale, $creatorId);
+                $this->capitalService->updateShopCapital((int) $validated['shop_id']);
             });
         } catch (\RuntimeException $exception) {
             return response()->json([
@@ -350,7 +351,6 @@ class SaleController extends Controller
 
         $product->refresh();
         $batch->refresh();
-        $this->capitalService->updateShopCapital((int) $validated['shop_id']);
 
         return response()->json([
             'message' => 'Sale recorded successfully.',
@@ -427,15 +427,13 @@ class SaleController extends Controller
 
                 $this->productBatchService->consumeBatch($batch, $quantity);
                 $this->warrantyExchangeService->syncAutoWarrantyForSale($sale, $creatorId);
+                $this->capitalService->updateShopCapital((int) $validated['shop_id']);
             });
         } catch (\RuntimeException $exception) {
             return back()
                 ->withInput()
                 ->withErrors(['quantity' => $exception->getMessage()]);
         }
-
-        // Recalculate shop capital after stock deduction
-        $this->capitalService->updateShopCapital($validated['shop_id']);
 
         return redirect()->route('sale.index')
             ->with('success', 'Sale created successfully!');
@@ -526,7 +524,7 @@ class SaleController extends Controller
         try {
             $creatorId = (int) Auth::id();
 
-            DB::transaction(function () use ($validated, $sale, $product, $batch, $creatorId): void {
+            DB::transaction(function () use ($validated, $sale, $product, $batch, $creatorId, $oldShopId): void {
                 $oldBatch = ProductBatch::withTrashed()->find($sale->product_batch_id);
                 if ($oldBatch) {
                     $this->productBatchService->restoreBatch($oldBatch, (int) $sale->quantity);
@@ -557,6 +555,11 @@ class SaleController extends Controller
 
                 $this->productBatchService->consumeBatch($batch, $requestedQty);
                 $this->warrantyExchangeService->syncAutoWarrantyForSale($sale->fresh('product'), $creatorId);
+                $this->capitalService->updateShopCapital((int) $validated['shop_id']);
+
+                if ($oldShopId !== (int) $validated['shop_id']) {
+                    $this->capitalService->updateShopCapital($oldShopId);
+                }
             });
         } catch (\RuntimeException $exception) {
             return back()
@@ -564,10 +567,6 @@ class SaleController extends Controller
                 ->withErrors(['quantity' => $exception->getMessage()]);
         }
 
-        $this->capitalService->updateShopCapital((int) $validated['shop_id']);
-        if ($oldShopId !== (int) $validated['shop_id']) {
-            $this->capitalService->updateShopCapital($oldShopId);
-        }
 
         return redirect()->route('sale.index')
             ->with('success', 'Sale updated successfully!');
