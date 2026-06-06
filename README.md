@@ -217,11 +217,16 @@ The platform employs a robust Domain-Driven Modular Design governed by `nwidart/
 
 - **Unimplemented Scaffold Command:** The system documentation prominently featured a custom CLI utility (`tenant:create`), but the command file was missing from the console registry, leading to runtime failures if invoked via DevOps pipelines.
 
-- **Global Cache-Scoping Risks:** Application settings inside the Settings module utilized raw key lookups (`setting.{$key}`). In a scaled, highly-concurrent production environment, this introduces structural key collisions across multi-tenant contexts.
+- **Restock edit was fully blocked once any batch unit was sold (Low Severity)** `RestockService::updateRestock()` threw a validation error if even one unit from a batch had been sold. Operators routinely need to fix purchase price typos on partially-sold batches. Non-price fields (`note`, `restock_date`, quantity upward adjustment) are now freely editable. Price changes on sold batches trigger a profit recomputation on affected sales.
+Affected file: `Modules/Restock/Services/RestockService.php`
 
-- **Heavy Memory Footprint during PDF Exports:** Exporting hundreds of historical line items utilizing `laravel-dompdf` natively fetches entire collections directly into application state memory, exposing the system to abrupt HTTP 500 Out-of-Memory faults.
+- **`tenant:create` artisan command was missing (Low Severity)**
 
-- **Inconsistent Checkout Request Payload:** The `quickSale` action tracked customer profile metadata (e.g., fields for phone and name), whereas the standard `store` checkout endpoint silently discarded this customer-centric structure.
+- **Global Cache-Scoping Risks (Medium Severity):** Application settings inside the Settings module utilized raw key lookups (`setting.{$key}`). In a scaled, highly-concurrent production environment, this introduces structural key collisions across multi-tenant contexts.
+
+- **Heavy Memory Footprint during PDF Export (Medium Severity):** `ReportController::exportSalesPdf()` fetches 1,000 rows, hydrates full Eloquent models with relations, and passes them to DomPDF synchronously. DomPDF consumes 5–15× the raw data size in memory. Fix: use a queued job for large exports or enforce a maximum date range.
+
+- **Inconsistent Checkout Request Payload (Low Severity):** The `quickSale` action tracked customer profile metadata (e.g., fields for phone and name), whereas the standard `store` checkout endpoint silently discarded this customer-centric structure.
 
 ### 4. What Was Fixed & Patched
 
