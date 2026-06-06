@@ -579,17 +579,17 @@ class SaleController extends Controller
 
         $shopId = $sale->shop_id;
 
-        DB::transaction(function () use ($sale) {
+        DB::transaction(function () use ($sale, $shopId) {
             $batch = ProductBatch::withTrashed()->find($sale->product_batch_id);
             if ($batch) {
                 $this->productBatchService->restoreBatch($batch, (int) $sale->quantity);
             }
 
             $sale->delete();
-        });
 
-        // Recalculate shop capital after stock restoration
-        $this->capitalService->updateShopCapital($shopId);
+            // Recalculate shop capital after stock restoration
+            $this->capitalService->updateShopCapital($shopId);
+        });
 
         return redirect()->route('sale.index')
             ->with('success', 'Sale deleted successfully!');
