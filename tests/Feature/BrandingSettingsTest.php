@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\User;
-use Modules\Settings\Models\Setting;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Settings\Models\Setting;
 
 uses(RefreshDatabase::class);
 
@@ -44,17 +44,17 @@ test('superadmin can update branding settings and upload logo', function () {
         ],
         'settings_files' => [
             'dashboard_logo' => $logo,
-        ]
+        ],
     ]);
 
     $response->assertRedirect(route('settings.dashboard'));
-    
+
     // Assert settings database values updated
     $this->assertEquals('My Brand App', Setting::get('app_name'));
-    
+
     $logoPath = Setting::get('dashboard_logo');
     $this->assertNotEmpty($logoPath);
-    
+
     // The logo should be stored in public disk
     $relativePath = str_replace('/storage/', '', $logoPath);
     Storage::disk('public')->assertExists($relativePath);
@@ -82,4 +82,3 @@ test('landing page loads with dynamic configurations', function () {
     $response->assertSee('#8b5cf6');
     $response->assertSee('/storage/branding/fake_logo.png');
 });
-

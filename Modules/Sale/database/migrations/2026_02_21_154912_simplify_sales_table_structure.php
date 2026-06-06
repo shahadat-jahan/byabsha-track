@@ -23,7 +23,7 @@ return new class extends Migration
                 'customer_name',
                 'customer_phone',
                 'payment_status',
-                'notes'
+                'notes',
             ]);
         });
 

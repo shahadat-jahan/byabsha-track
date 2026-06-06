@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -17,7 +15,7 @@ return new class extends Migration
             'app_timezone',
             'currency',
             'currency_symbol',
-            'default_language'
+            'default_language',
         ])->update(['group' => 'system']);
 
         // Update app_name and business information to dashboard group
@@ -26,7 +24,7 @@ return new class extends Migration
             'business_name',
             'business_email',
             'business_phone',
-            'business_address'
+            'business_address',
         ])->update(['group' => 'dashboard']);
 
         // Insert new branding settings if not exists
@@ -40,7 +38,7 @@ return new class extends Migration
             ['key' => 'social_twitter', 'value' => 'https://twitter.com', 'type' => 'text', 'group' => 'dashboard', 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'social_instagram', 'value' => 'https://instagram.com', 'type' => 'text', 'group' => 'dashboard', 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'social_linkedin', 'value' => 'https://linkedin.com', 'type' => 'text', 'group' => 'dashboard', 'created_at' => now(), 'updated_at' => now()],
-            
+
             // Landing settings placeholders
             ['key' => 'landing_title', 'value' => 'Byabsha Track', 'type' => 'text', 'group' => 'landing', 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'landing_hero_title', 'value' => 'Ultimate Solution to Track Your Business Assets & Sales', 'type' => 'text', 'group' => 'landing', 'created_at' => now(), 'updated_at' => now()],
@@ -49,7 +47,7 @@ return new class extends Migration
 
         foreach ($newSettings as $setting) {
             $exists = DB::table('settings')->where('key', $setting['key'])->exists();
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('settings')->insert($setting);
             }
         }
@@ -65,7 +63,7 @@ return new class extends Migration
             'app_timezone',
             'currency',
             'currency_symbol',
-            'default_language'
+            'default_language',
         ])->update(['group' => 'general']);
 
         DB::table('settings')->whereIn('key', [
@@ -73,7 +71,7 @@ return new class extends Migration
             'business_name',
             'business_email',
             'business_phone',
-            'business_address'
+            'business_address',
         ])->update(['group' => 'business']);
 
         // Delete branding settings
@@ -89,7 +87,7 @@ return new class extends Migration
             'social_linkedin',
             'landing_title',
             'landing_hero_title',
-            'landing_hero_subtitle'
+            'landing_hero_subtitle',
         ])->delete();
     }
 };

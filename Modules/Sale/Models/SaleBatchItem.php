@@ -2,8 +2,8 @@
 
 namespace Modules\Sale\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Restock\Models\Restock;
 
 class SaleBatchItem extends Model

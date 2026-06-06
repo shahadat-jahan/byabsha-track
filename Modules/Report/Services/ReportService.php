@@ -2,12 +2,13 @@
 
 namespace Modules\Report\Services;
 
+use Illuminate\Support\Facades\DB;
+use Modules\Product\Models\Product;
 use Modules\Sale\Models\Sale;
 use Modules\Sale\Models\SaleExchange;
 use Modules\Sale\Models\SaleWarranty;
-use Modules\Product\Models\Product;
+use Modules\Settings\Models\Setting;
 use Modules\Shop\Models\Shop;
-use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -15,19 +16,19 @@ class ReportService
     {
         $query = Sale::with(['shop', 'product']);
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sale_date', '<=', $filters['end_date']);
         }
 
@@ -46,19 +47,19 @@ class ReportService
     {
         $query = DB::table('sales');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sale_date', '<=', $filters['end_date']);
         }
 
@@ -79,22 +80,22 @@ class ReportService
         $warrantyQuery = SaleWarranty::query();
         $exchangeQuery = SaleExchange::query();
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $warrantyQuery->whereIn('shop_id', $filters['shop_ids']);
             $exchangeQuery->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $warrantyQuery->where('shop_id', $filters['shop_id']);
             $exchangeQuery->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $warrantyQuery->whereDate('start_date', '>=', $filters['start_date']);
             $exchangeQuery->whereDate('exchange_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $warrantyQuery->whereDate('start_date', '<=', $filters['end_date']);
             $exchangeQuery->whereDate('exchange_date', '<=', $filters['end_date']);
         }
@@ -136,15 +137,15 @@ class ReportService
             )
             ->groupBy('shops.id', 'shops.name');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('sales.shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sales.sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sales.sale_date', '<=', $filters['end_date']);
         }
 
@@ -166,15 +167,15 @@ class ReportService
             )
             ->groupBy('products.id', 'products.name', 'shops.name');
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('sales.shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sales.sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sales.sale_date', '<=', $filters['end_date']);
         }
 
@@ -185,30 +186,30 @@ class ReportService
     {
         $query = Product::with('shop');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
         $products = $query->get();
 
         $totalProducts = $products->count();
-        $totalStockValue = $products->sum(function($product) {
+        $totalStockValue = $products->sum(function ($product) {
             return $product->stock_quantity * $product->purchase_price;
         });
-        $totalPotentialRevenue = $products->sum(function($product) {
+        $totalPotentialRevenue = $products->sum(function ($product) {
             return $product->stock_quantity * $product->sale_price;
         });
         $totalPotentialProfit = $totalPotentialRevenue - $totalStockValue;
 
-        $lowStockProducts = $products->filter(function($product) {
-            return $product->stock_quantity <= (int) \Modules\Settings\Models\Setting::get('low_stock_alert', 5);
+        $lowStockProducts = $products->filter(function ($product) {
+            return $product->stock_quantity <= (int) Setting::get('low_stock_alert', 5);
         })->count();
 
-        $outOfStockProducts = $products->filter(function($product) {
+        $outOfStockProducts = $products->filter(function ($product) {
             return $product->stock_quantity == 0;
         })->count();
 
@@ -226,9 +227,10 @@ class ReportService
     public function getShops(array $shopIds = [])
     {
         $query = Shop::query();
-        if (!empty($shopIds)) {
+        if (! empty($shopIds)) {
             $query->whereIn('id', $shopIds);
         }
+
         return $query->get();
     }
 
@@ -239,19 +241,19 @@ class ReportService
     {
         $query = Sale::with(['shop', 'product']);
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sale_date', '<=', $filters['end_date']);
         }
 
@@ -272,11 +274,11 @@ class ReportService
             )
             ->groupBy('products.id');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('products.shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('products.shop_id', $filters['shop_id']);
         }
 
@@ -290,7 +292,7 @@ class ReportService
     {
         $shopIdsFilter = $filters['shop_ids'] ?? [];
         $query = Shop::withCount('products');
-        if (!empty($shopIdsFilter)) {
+        if (! empty($shopIdsFilter)) {
             $query->whereIn('id', $shopIdsFilter);
         }
         $shops = $query->get();
@@ -300,11 +302,11 @@ class ReportService
         foreach ($shops as $shop) {
             $salesQuery = Sale::where('shop_id', $shop->id);
 
-            if (!empty($filters['start_date'])) {
+            if (! empty($filters['start_date'])) {
                 $salesQuery->whereDate('sale_date', '>=', $filters['start_date']);
             }
 
-            if (!empty($filters['end_date'])) {
+            if (! empty($filters['end_date'])) {
                 $salesQuery->whereDate('sale_date', '<=', $filters['end_date']);
             }
 
@@ -349,19 +351,19 @@ class ReportService
             ->groupBy(DB::raw('DATE(sale_date)'))
             ->orderBy('date', 'desc');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sale_date', '<=', $filters['end_date']);
         }
 
@@ -382,19 +384,19 @@ class ReportService
             ->orderBy('sale_date', 'desc')
             ->orderBy('id', 'desc');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('sale_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('sale_date', '<=', $filters['end_date']);
         }
 
@@ -414,11 +416,11 @@ class ReportService
             ->orderBy('sale_date', 'desc')
             ->orderBy('id', 'desc');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
@@ -431,7 +433,7 @@ class ReportService
     public function getDailyProfitLoss($filters = [])
     {
         $month = $filters['month'] ?? now()->format('Y-m');
-        $startDate = $month . '-01';
+        $startDate = $month.'-01';
         $endDate = date('Y-m-t', strtotime($startDate));
 
         // --- aggregate query builder (reused) ---
@@ -452,9 +454,9 @@ class ReportService
                 DB::raw('SUM(sales.quantity * products.purchase_price) as total_cost'),
                 DB::raw('SUM(sales.profit) as total_profit')
             )
-            ->groupBy(DB::raw('DATE(sales.sale_date)'))
-            ->orderBy('date', 'asc')
-            ->get();
+                ->groupBy(DB::raw('DATE(sales.sale_date)'))
+                ->orderBy('date', 'asc')
+                ->get();
         };
 
         $shopId = $filters['shop_id'] ?? null;
@@ -467,7 +469,7 @@ class ReportService
         $shopBreakdown = collect();
         if (empty($shopId)) {
             $shopQuery = Shop::query();
-            if (!empty($shopIdsFilter)) {
+            if (! empty($shopIdsFilter)) {
                 $shopQuery->whereIn('id', $shopIdsFilter);
             }
             $shops = $shopQuery->get();
@@ -485,18 +487,18 @@ class ReportService
         // Monthly totals
         $totals = (object) [
             'total_sales_count' => $dailyRows->sum('total_sales_count'),
-            'total_revenue'     => $dailyRows->sum('total_revenue'),
-            'total_cost'        => $dailyRows->sum('total_cost'),
-            'total_profit'      => $dailyRows->sum('total_profit'),
+            'total_revenue' => $dailyRows->sum('total_revenue'),
+            'total_cost' => $dailyRows->sum('total_cost'),
+            'total_profit' => $dailyRows->sum('total_profit'),
         ];
 
         return [
-            'rows'          => $dailyRows,
-            'totals'        => $totals,
+            'rows' => $dailyRows,
+            'totals' => $totals,
             'shopBreakdown' => $shopBreakdown,
-            'month'         => $month,
-            'start_date'    => $startDate,
-            'end_date'      => $endDate,
+            'month' => $month,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
         ];
     }
 
@@ -506,8 +508,8 @@ class ReportService
     public function getMonthlyProfitLoss($filters = [])
     {
         $year = $filters['year'] ?? now()->format('Y');
-        $startDate = $year . '-01-01';
-        $endDate = $year . '-12-31';
+        $startDate = $year.'-01-01';
+        $endDate = $year.'-12-31';
 
         $driver = DB::getDriverName();
 
@@ -539,9 +541,9 @@ class ReportService
                 DB::raw('SUM(sales.quantity * products.purchase_price) as total_cost'),
                 DB::raw('SUM(sales.profit) as total_profit')
             )
-            ->groupBy($monthGroup)
-            ->orderBy('month_number', 'asc')
-            ->get();
+                ->groupBy($monthGroup)
+                ->orderBy('month_number', 'asc')
+                ->get();
         };
 
         $shopId = $filters['shop_id'] ?? null;
@@ -554,6 +556,7 @@ class ReportService
             $row->profit_margin = $row->total_revenue > 0
                 ? round(($row->total_profit / $row->total_revenue) * 100, 1)
                 : 0;
+
             return $row;
         });
 
@@ -561,7 +564,7 @@ class ReportService
         $shopBreakdown = collect();
         if (empty($shopId)) {
             $shopQuery = Shop::query();
-            if (!empty($shopIdsFilter)) {
+            if (! empty($shopIdsFilter)) {
                 $shopQuery->whereIn('id', $shopIdsFilter);
             }
             $shops = $shopQuery->get();
@@ -572,6 +575,7 @@ class ReportService
                         $row->profit_margin = $row->total_revenue > 0
                             ? round(($row->total_profit / $row->total_revenue) * 100, 1)
                             : 0;
+
                         return $row;
                     });
                     $shopBreakdown->put($shop->id, (object) [
@@ -587,17 +591,17 @@ class ReportService
         $totalProfit = $monthlyRows->sum('total_profit');
         $totals = (object) [
             'total_sales_count' => $monthlyRows->sum('total_sales_count'),
-            'total_revenue'     => $totalRevenue,
-            'total_cost'        => $monthlyRows->sum('total_cost'),
-            'total_profit'      => $totalProfit,
-            'profit_margin'     => $totalRevenue > 0 ? round(($totalProfit / $totalRevenue) * 100, 1) : 0,
+            'total_revenue' => $totalRevenue,
+            'total_cost' => $monthlyRows->sum('total_cost'),
+            'total_profit' => $totalProfit,
+            'profit_margin' => $totalRevenue > 0 ? round(($totalProfit / $totalRevenue) * 100, 1) : 0,
         ];
 
         return [
-            'rows'          => $monthlyRows,
-            'totals'        => $totals,
+            'rows' => $monthlyRows,
+            'totals' => $totals,
             'shopBreakdown' => $shopBreakdown,
-            'year'          => $year,
+            'year' => $year,
         ];
     }
 }

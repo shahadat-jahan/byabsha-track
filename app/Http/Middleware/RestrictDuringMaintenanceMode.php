@@ -11,18 +11,18 @@ use Throwable;
 class RestrictDuringMaintenanceMode
 {
     /**
-    * Block owner/user access when app maintenance mode is enabled in settings.
+     * Block owner/user access when app maintenance mode is enabled in settings.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (app()->runningInConsole() && !app()->runningUnitTests()) {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
             return $next($request);
         }
 
         try {
             $maintenanceMode = (bool) Setting::get('maintenance_mode', false);
 
-            if (!$maintenanceMode) {
+            if (! $maintenanceMode) {
                 return $next($request);
             }
         } catch (Throwable) {

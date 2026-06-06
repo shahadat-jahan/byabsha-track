@@ -3,6 +3,7 @@
 namespace Modules\Damage\Models;
 
 use App\Models\TenantModel;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Shop\Models\Shop;
@@ -41,6 +42,6 @@ class Damage extends TenantModel
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by')->withTrashed();
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 }

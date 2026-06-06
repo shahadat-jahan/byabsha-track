@@ -21,10 +21,14 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('payment_requests', function (Blueprint $table) {
-            $table->dropForeign(['shop_id']); $table->dropForeign(['branch_id']); $table->dropColumn(['shop_id', 'branch_id']);
+            $table->dropForeign(['shop_id']);
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn(['shop_id', 'branch_id']);
         });
         Schema::table('subscriptions', function (Blueprint $table) {
-            $table->dropForeign(['shop_id']); $table->dropForeign(['branch_id']); $table->dropColumn(['shop_id', 'branch_id']);
+            $table->dropForeign(['shop_id']);
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn(['shop_id', 'branch_id']);
         });
     }
 };

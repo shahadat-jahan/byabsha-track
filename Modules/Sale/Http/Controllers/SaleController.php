@@ -3,32 +3,33 @@
 namespace Modules\Sale\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Sale\Models\Sale;
-use Modules\Sale\Models\SaleBatchItem;
-use Modules\Shop\Models\Shop;
-use Modules\Product\Models\Product;
-use Modules\Restock\Models\Restock;
-use Modules\Product\Models\ProductBatch;
-use Modules\Capital\Services\CapitalService;
-use Modules\Product\Services\ProductBatchService;
-use Modules\Sale\Services\WarrantyExchangeService;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Modules\Capital\Services\CapitalService;
+use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductBatch;
+use Modules\Product\Services\ProductBatchService;
+use Modules\Restock\Models\Restock;
+use Modules\Sale\Models\Sale;
+use Modules\Sale\Services\WarrantyExchangeService;
+use Modules\Shop\Models\Shop;
 use Yajra\DataTables\Facades\DataTables;
 
 class SaleController extends Controller
 {
     protected $capitalService;
+
     protected ProductBatchService $productBatchService;
+
     protected WarrantyExchangeService $warrantyExchangeService;
 
     public function __construct(
         CapitalService $capitalService,
         ProductBatchService $productBatchService,
         WarrantyExchangeService $warrantyExchangeService
-    )
-    {
+    ) {
         $this->capitalService = $capitalService;
         $this->productBatchService = $productBatchService;
         $this->warrantyExchangeService = $warrantyExchangeService;
@@ -67,8 +68,8 @@ class SaleController extends Controller
             $batch->decrement('remaining_quantity', $take);
 
             $items[] = [
-                'restock_id'              => $batch->id,
-                'quantity'                => $take,
+                'restock_id' => $batch->id,
+                'quantity' => $take,
                 'purchase_price_per_unit' => (float) $batch->purchase_price_per_unit,
             ];
 
@@ -88,7 +89,7 @@ class SaleController extends Controller
         $weightedAvgCost = $quantity > 0 ? round($totalCost / $quantity, 2) : 0.0;
 
         return [
-            'items'            => $items,
+            'items' => $items,
             'weighted_avg_cost' => $weightedAvgCost,
         ];
     }
@@ -108,6 +109,7 @@ class SaleController extends Controller
 
         $sale->batchItems()->delete();
     }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -115,7 +117,7 @@ class SaleController extends Controller
         $selectedShopId = $request->integer('shop_id', (int) optional($shops->first())->id);
 
         // Ensure the selected shop belongs to the user
-        if ($selectedShopId && !$user->ownsShop($selectedShopId)) {
+        if ($selectedShopId && ! $user->ownsShop($selectedShopId)) {
             $selectedShopId = (int) optional($shops->first())->id;
         }
 
@@ -170,8 +172,8 @@ class SaleController extends Controller
                 $search = request('search')['value'] ?? null;
                 if ($search) {
                     $query->where(function ($q) use ($search) {
-                        $q->where('products.name', 'like', '%' . $search . '%')
-                            ->orWhere('product_batches.batch_code', 'like', '%' . $search . '%')
+                        $q->where('products.name', 'like', '%'.$search.'%')
+                            ->orWhere('product_batches.batch_code', 'like', '%'.$search.'%')
                             ->orWhereRaw("JSON_SEARCH(product_batches.attribute_values, 'one', CONCAT('%', ?, '%')) IS NOT NULL", [$search]);
                     });
                 }
@@ -183,9 +185,10 @@ class SaleController extends Controller
                 return $batch->product_category ?? '-';
             })
             ->addColumn('batch_label', function (ProductBatch $batch) {
-                $code = '<span class="batch-code-pill"><i class="bi bi-qr-code"></i> ' . e($batch->batch_code) . '</span>';
-                $date = $batch->batch_date ? '<div class="batch-date-sub text-muted small mt-1"><i class="bi bi-calendar3"></i> ' . e($batch->batch_date->format('d M Y')) . '</div>' : '';
-                return '<div class="batch-info-wrapper">' . $code . $date . '</div>';
+                $code = '<span class="batch-code-pill"><i class="bi bi-qr-code"></i> '.e($batch->batch_code).'</span>';
+                $date = $batch->batch_date ? '<div class="batch-date-sub text-muted small mt-1"><i class="bi bi-calendar3"></i> '.e($batch->batch_date->format('d M Y')).'</div>' : '';
+
+                return '<div class="batch-info-wrapper">'.$code.$date.'</div>';
             })
             ->addColumn('attribute_summary', function (ProductBatch $batch) {
                 return $this->buildSaleAttributeSummary($batch);
@@ -216,50 +219,50 @@ class SaleController extends Controller
                 $canSell = $batch->remaining_quantity > 0;
 
                 $saleButton = '<button type="button" class="btn btn-sm btn-sale-primary js-sale-btn" '
-                    . 'data-product-id="' . e((string) $batch->product_id) . '" '
-                    . 'data-batch-id="' . e((string) $batch->id) . '" '
-                    . 'data-batch-code="' . e((string) $batch->batch_code) . '" '
-                    . 'data-attribute-summary="' . e($this->buildSaleAttributeSummary($batch)) . '" '
-                    . 'data-attribute-values="' . e(json_encode($this->buildSaleAttributeValues($batch), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '" '
-                    . 'data-shop-id="' . e((string) $batch->shop_id) . '" '
-                    . 'data-product-name="' . e((string) $batch->product_name) . '" '
-                    . 'data-stock="' . e((string) $batch->remaining_quantity) . '" '
-                    . 'data-purchase-price="' . e((string) $batch->purchase_price) . '" '
-                    . 'data-has-free-service="' . e((string) ((int) ($batch->has_free_service ?? 0))) . '" '
-                    . 'data-free-service-duration-value="' . e((string) ($batch->free_service_duration_value ?? '')) . '" '
-                    . 'data-free-service-duration-unit="' . e((string) ($batch->free_service_duration_unit ?? '')) . '" '
-                    . 'data-free-service-terms="' . e((string) ($batch->free_service_terms ?? '')) . '" '
-                    . ($canSell ? '' : 'disabled ')
-                    . 'title="Sale">'
-                    . '<i class="bi bi-cart-plus-fill"></i> ' . e(__('sale.sale_button'))
-                    . '</button>';
+                    .'data-product-id="'.e((string) $batch->product_id).'" '
+                    .'data-batch-id="'.e((string) $batch->id).'" '
+                    .'data-batch-code="'.e((string) $batch->batch_code).'" '
+                    .'data-attribute-summary="'.e($this->buildSaleAttributeSummary($batch)).'" '
+                    .'data-attribute-values="'.e(json_encode($this->buildSaleAttributeValues($batch), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)).'" '
+                    .'data-shop-id="'.e((string) $batch->shop_id).'" '
+                    .'data-product-name="'.e((string) $batch->product_name).'" '
+                    .'data-stock="'.e((string) $batch->remaining_quantity).'" '
+                    .'data-purchase-price="'.e((string) $batch->purchase_price).'" '
+                    .'data-has-free-service="'.e((string) ((int) ($batch->has_free_service ?? 0))).'" '
+                    .'data-free-service-duration-value="'.e((string) ($batch->free_service_duration_value ?? '')).'" '
+                    .'data-free-service-duration-unit="'.e((string) ($batch->free_service_duration_unit ?? '')).'" '
+                    .'data-free-service-terms="'.e((string) ($batch->free_service_terms ?? '')).'" '
+                    .($canSell ? '' : 'disabled ')
+                    .'title="Sale">'
+                    .'<i class="bi bi-cart-plus-fill"></i> '.e(__('sale.sale_button'))
+                    .'</button>';
 
-                $deleteForm = '<form action="' . e($deleteUrl) . '" method="POST" class="d-inline" '
-                    . 'onsubmit="return confirm(\'' . e(__('product.confirm_delete')) . '\')">'
-                    . csrf_field()
-                    . method_field('DELETE')
-                    . '<button type="submit" class="dropdown-item text-danger">'
-                    . '<i class="bi bi-trash me-2"></i>' . e(__('app.delete'))
-                    . '</button>'
-                    . '</form>';
+                $deleteForm = '<form action="'.e($deleteUrl).'" method="POST" class="d-inline" '
+                    .'onsubmit="return confirm(\''.e(__('product.confirm_delete')).'\')">'
+                    .csrf_field()
+                    .method_field('DELETE')
+                    .'<button type="submit" class="dropdown-item text-danger">'
+                    .'<i class="bi bi-trash me-2"></i>'.e(__('app.delete'))
+                    .'</button>'
+                    .'</form>';
 
                 $dropdown = '<div class="dropdown d-inline-block">'
-                    . '<button class="btn btn-sm btn-outline-secondary dropdown-toggle btn-actions-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">'
-                    . '<i class="bi bi-three-dots-vertical"></i>'
-                    . '</button>'
-                    . '<ul class="dropdown-menu dropdown-menu-end shadow-sm border-light">'
-                    . '<li><a class="dropdown-item" href="' . e($viewSalesUrl) . '"><i class="bi bi-eye me-2"></i>' . e(__('sale.view_all_sales')) . '</a></li>'
-                    . '<li><a class="dropdown-item" href="' . e($createUrl) . '"><i class="bi bi-plus-circle me-2"></i>' . e(__('app.create')) . '</a></li>'
-                    . '<li><a class="dropdown-item" href="' . e($editUrl) . '"><i class="bi bi-pencil me-2"></i>' . e(__('app.edit')) . '</a></li>'
-                    . '<li><hr class="dropdown-divider"></li>'
-                    . '<li>' . $deleteForm . '</li>'
-                    . '</ul>'
-                    . '</div>';
+                    .'<button class="btn btn-sm btn-outline-secondary dropdown-toggle btn-actions-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">'
+                    .'<i class="bi bi-three-dots-vertical"></i>'
+                    .'</button>'
+                    .'<ul class="dropdown-menu dropdown-menu-end shadow-sm border-light">'
+                    .'<li><a class="dropdown-item" href="'.e($viewSalesUrl).'"><i class="bi bi-eye me-2"></i>'.e(__('sale.view_all_sales')).'</a></li>'
+                    .'<li><a class="dropdown-item" href="'.e($createUrl).'"><i class="bi bi-plus-circle me-2"></i>'.e(__('app.create')).'</a></li>'
+                    .'<li><a class="dropdown-item" href="'.e($editUrl).'"><i class="bi bi-pencil me-2"></i>'.e(__('app.edit')).'</a></li>'
+                    .'<li><hr class="dropdown-divider"></li>'
+                    .'<li>'.$deleteForm.'</li>'
+                    .'</ul>'
+                    .'</div>';
 
                 return '<div class="d-flex gap-2 justify-content-center align-items-center">'
-                    . $saleButton
-                    . $dropdown
-                    . '</div>';
+                    .$saleButton
+                    .$dropdown
+                    .'</div>';
             })
             ->rawColumns(['actions', 'batch_label'])
             ->toJson();
@@ -268,8 +271,8 @@ class SaleController extends Controller
     public function quickSale(Request $request)
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'sales')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'sales')) {
             return response()->json(['message' => 'Your plan limit for sales has been reached. Please upgrade.'], 403);
         }
 
@@ -299,7 +302,7 @@ class SaleController extends Controller
             ->where('shop_id', $validated['shop_id'])
             ->first();
 
-        if (!$product || !$batch) {
+        if (! $product || ! $batch) {
             return response()->json([
                 'message' => 'Selected product batch does not belong to the selected shop.',
             ], 422);
@@ -307,7 +310,7 @@ class SaleController extends Controller
 
         if ($batch->remaining_quantity < $validated['quantity']) {
             return response()->json([
-                'message' => 'Insufficient batch stock. Available: ' . $batch->remaining_quantity,
+                'message' => 'Insufficient batch stock. Available: '.$batch->remaining_quantity,
             ], 422);
         }
 
@@ -362,20 +365,21 @@ class SaleController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'sales')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'sales')) {
             return redirect()->route('sale.index')->with('error', 'Your plan limit for sales has been reached. Please upgrade to add more sales.');
         }
         $shops = Shop::forUser($user)->get();
         $products = Product::with('shop')->whereIn('shop_id', $user->accessibleShopIds())->get();
+
         return view('sale::create', compact('shops', 'products'));
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'sales')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'sales')) {
             return back()->withInput()->withErrors(['error' => 'Your plan limit for sales has been reached. Please upgrade.']);
         }
 
@@ -391,7 +395,7 @@ class SaleController extends Controller
         $batch = ProductBatch::with('product')->findOrFail($validated['product_batch_id']);
         $product = $batch->product;
 
-        if (!$product || (int) $batch->shop_id !== (int) $validated['shop_id']) {
+        if (! $product || (int) $batch->shop_id !== (int) $validated['shop_id']) {
             return back()
                 ->withInput()
                 ->withErrors(['product_batch_id' => 'Selected product batch does not belong to the selected shop.']);
@@ -400,7 +404,7 @@ class SaleController extends Controller
         if ((int) $batch->remaining_quantity < (int) $validated['quantity']) {
             return back()
                 ->withInput()
-                ->withErrors(['quantity' => 'Insufficient batch stock. Available: ' . $batch->remaining_quantity]);
+                ->withErrors(['quantity' => 'Insufficient batch stock. Available: '.$batch->remaining_quantity]);
         }
 
         try {
@@ -448,6 +452,7 @@ class SaleController extends Controller
             'warranties' => fn ($query) => $query->latest('id'),
         ])->findOrFail($id);
         abort_unless(auth()->user()->ownsShop((int) $sale->shop_id), 403, 'You do not have access to this shop.');
+
         return view('sale::show', compact('sale'));
     }
 
@@ -493,6 +498,7 @@ class SaleController extends Controller
         abort_unless($user->ownsShop((int) $sale->shop_id), 403, 'You do not have access to this shop.');
         $shops = Shop::forUser($user)->get();
         $products = Product::with('shop')->whereIn('shop_id', $user->accessibleShopIds())->get();
+
         return view('sale::edit', compact('sale', 'shops', 'products'));
     }
 
@@ -515,7 +521,7 @@ class SaleController extends Controller
         $batch = ProductBatch::with('product')->findOrFail($validated['product_batch_id']);
         $product = $batch->product;
 
-        if (!$product || (int) $batch->shop_id !== (int) $validated['shop_id']) {
+        if (! $product || (int) $batch->shop_id !== (int) $validated['shop_id']) {
             return back()
                 ->withInput()
                 ->withErrors(['product_batch_id' => 'Selected product batch does not belong to the selected shop.']);
@@ -566,7 +572,6 @@ class SaleController extends Controller
                 ->withInput()
                 ->withErrors(['quantity' => $exception->getMessage()]);
         }
-
 
         return redirect()->route('sale.index')
             ->with('success', 'Sale updated successfully!');
@@ -644,7 +649,7 @@ class SaleController extends Controller
             ->values()
             ->all();
 
-        if (!empty($productValues)) {
+        if (! empty($productValues)) {
             return $productValues;
         }
 
@@ -670,7 +675,7 @@ class SaleController extends Controller
                 $label = (string) ($item['label'] ?? $item['field_key'] ?? 'Attribute');
                 $value = (string) ($item['value'] ?? '');
 
-                return trim($label) . ': ' . trim($value);
+                return trim($label).': '.trim($value);
             })
             ->values();
 

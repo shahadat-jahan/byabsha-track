@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class PasswordResetController extends Controller
 {
-    public function create(): \Illuminate\Http\RedirectResponse
+    public function create(): RedirectResponse
     {
         return redirect()->route('landing.index', ['auth' => 'forgot']);
     }

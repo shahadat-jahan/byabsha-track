@@ -2,17 +2,18 @@
 
 namespace Modules\Restock\Services;
 
-use Modules\Restock\Models\Restock;
-use Modules\Product\Models\Product;
-use Modules\Capital\Services\CapitalService;
-use Modules\Product\Services\ProductBatchService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Modules\Capital\Services\CapitalService;
+use Modules\Product\Models\Product;
+use Modules\Product\Services\ProductBatchService;
+use Modules\Restock\Models\Restock;
 
 class RestockService
 {
     protected CapitalService $capitalService;
+
     protected ProductBatchService $productBatchService;
 
     public function __construct(CapitalService $capitalService, ProductBatchService $productBatchService)
@@ -30,19 +31,19 @@ class RestockService
         ])->latest('restock_date');
 
         // Always scope to allowed shop IDs when provided
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('restock_date', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('restock_date', '<=', $filters['date_to']);
         }
 
@@ -181,7 +182,7 @@ class RestockService
     public function deleteRestock(int $id): void
     {
         DB::transaction(function () use ($id) {
-            Log::debug('Finding restock with ID: ' . $id);
+            Log::debug('Finding restock with ID: '.$id);
             $restock = Restock::with('productBatch')->findOrFail($id);
             Log::debug('Found restock, deleting...');
 

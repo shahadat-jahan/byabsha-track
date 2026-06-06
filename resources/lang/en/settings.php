@@ -70,7 +70,7 @@ return [
     'support_phone_help' => 'Contact phone number for support requests',
     'company_address' => 'Company Address',
     'company_address_help' => 'The main office address of your company',
-    
+
     // Social Links
     'social_facebook' => 'Facebook Link',
     'social_facebook_help' => 'Your company Facebook page URL',

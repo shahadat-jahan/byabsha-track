@@ -27,7 +27,7 @@ class ProductBatchService
             'note' => $attributes['note'] ?? null,
         ]);
 
-        if (!$batch->batch_code) {
+        if (! $batch->batch_code) {
             $batch->batch_code = $this->generateBatchCode((int) $batch->id, (string) $batch->batch_date);
             $batch->save();
         }
@@ -171,7 +171,7 @@ class ProductBatchService
     {
         $datePart = Carbon::parse($date)->format('Ymd');
 
-        return 'B-' . $datePart . '-' . str_pad((string) $id, 5, '0', STR_PAD_LEFT);
+        return 'B-'.$datePart.'-'.str_pad((string) $id, 5, '0', STR_PAD_LEFT);
     }
 
     private function getDefaultProductAttributes(Product $product): array

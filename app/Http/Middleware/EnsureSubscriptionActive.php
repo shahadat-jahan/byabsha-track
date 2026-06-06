@@ -25,7 +25,7 @@ class EnsureSubscriptionActive
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -54,7 +54,7 @@ class EnsureSubscriptionActive
             }
 
             return response()->view('subscription::expired', [
-                'user'       => $user,
+                'user' => $user,
                 'trialEnded' => $user->trialEndsAt(),
             ], 402);
         }

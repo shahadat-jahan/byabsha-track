@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
 class LanguageController extends Controller
 {
-    public function switch(Request $request, string $locale): \Illuminate\Http\RedirectResponse
+    public function switch(Request $request, string $locale): RedirectResponse
     {
         $supported = config('app.available_locales', ['en', 'bn']);
 

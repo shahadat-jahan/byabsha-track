@@ -3,25 +3,25 @@
 namespace Modules\Sale\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Modules\Product\Models\ProductBatch;
 use Modules\Sale\Models\Sale;
+use Modules\Sale\Models\SaleExchange;
 use Modules\Sale\Services\WarrantyExchangeService;
 use Modules\Shop\Models\Shop;
 use Yajra\DataTables\Facades\DataTables;
 
 class ExchangeController extends Controller
 {
-    public function __construct(protected WarrantyExchangeService $service)
-    {
-    }
+    public function __construct(protected WarrantyExchangeService $service) {}
 
     public function index(Request $request)
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
         $filters = $request->only(['shop_id', 'type']);
 
@@ -32,17 +32,17 @@ class ExchangeController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $allowedShopIds = $user->accessibleShopIds();
 
         $shopId = $request->input('shop_id');
         $type = $request->input('type');
 
-        if ($shopId && !in_array((int) $shopId, $allowedShopIds, true)) {
+        if ($shopId && ! in_array((int) $shopId, $allowedShopIds, true)) {
             abort(403, 'You do not have access to this shop.');
         }
 
-        $query = \Modules\Sale\Models\SaleExchange::query()
+        $query = SaleExchange::query()
             ->join('shops', 'shops.id', '=', 'sale_exchanges.shop_id')
             ->join('sales', 'sales.id', '=', 'sale_exchanges.sale_id')
             ->join('products', 'products.id', '=', 'sales.product_id')
@@ -80,31 +80,33 @@ class ExchangeController extends Controller
                 $search = request('search')['value'] ?? null;
                 if ($search) {
                     $q->where(function ($sub) use ($search) {
-                        $sub->where('sale_exchanges.sale_id', 'like', '%' . $search . '%')
-                            ->orWhere('products.name', 'like', '%' . $search . '%')
-                            ->orWhere('shops.name', 'like', '%' . $search . '%')
-                            ->orWhere('sale_exchanges.reason', 'like', '%' . $search . '%');
+                        $sub->where('sale_exchanges.sale_id', 'like', '%'.$search.'%')
+                            ->orWhere('products.name', 'like', '%'.$search.'%')
+                            ->orWhere('shops.name', 'like', '%'.$search.'%')
+                            ->orWhere('sale_exchanges.reason', 'like', '%'.$search.'%');
                     });
                 }
             }, false)
-            ->addColumn('sale_reference_label', function (\Modules\Sale\Models\SaleExchange $exchange) {
-                return '<strong class="text-teal">#' . e($exchange->sale_id) . '</strong>';
+            ->addColumn('sale_reference_label', function (SaleExchange $exchange) {
+                return '<strong class="text-teal">#'.e($exchange->sale_id).'</strong>';
             })
-            ->addColumn('shop_name_label', function (\Modules\Sale\Models\SaleExchange $exchange) {
-                return '<span class="badge bg-light text-dark border"><i class="bi bi-shop"></i> ' . e($exchange->shop_name ?? '-') . '</span>';
+            ->addColumn('shop_name_label', function (SaleExchange $exchange) {
+                return '<span class="badge bg-light text-dark border"><i class="bi bi-shop"></i> '.e($exchange->shop_name ?? '-').'</span>';
             })
-            ->addColumn('exchange_date_label', function (\Modules\Sale\Models\SaleExchange $exchange) {
-                return '<span class="text-semibold-muted" style="font-size: 0.82rem;"><i class="bi bi-calendar3"></i> ' . e($exchange->exchange_date->format('d M Y')) . '</span>';
+            ->addColumn('exchange_date_label', function (SaleExchange $exchange) {
+                return '<span class="text-semibold-muted" style="font-size: 0.82rem;"><i class="bi bi-calendar3"></i> '.e($exchange->exchange_date->format('d M Y')).'</span>';
             })
-            ->addColumn('exchange_type_label', function (\Modules\Sale\Models\SaleExchange $exchange) {
+            ->addColumn('exchange_type_label', function (SaleExchange $exchange) {
                 $badgeClass = $exchange->exchange_type === 'replacement' ? 'replacement' : 'return';
                 $iconClass = $exchange->exchange_type === 'replacement' ? 'bi-arrow-left-right' : 'bi-arrow-return-left';
-                return '<span class="exchange-badge exchange-badge-' . $badgeClass . '"><i class="bi ' . $iconClass . '"></i> ' . e(__('sale.exchange_type_' . $exchange->exchange_type)) . '</span>';
+
+                return '<span class="exchange-badge exchange-badge-'.$badgeClass.'"><i class="bi '.$iconClass.'"></i> '.e(__('sale.exchange_type_'.$exchange->exchange_type)).'</span>';
             })
-            ->addColumn('cost_difference_label', function (\Modules\Sale\Models\SaleExchange $exchange) {
-                $diffVal = (float)$exchange->cost_difference;
+            ->addColumn('cost_difference_label', function (SaleExchange $exchange) {
+                $diffVal = (float) $exchange->cost_difference;
                 $diffClass = $diffVal > 0 ? 'positive' : ($diffVal < 0 ? 'negative' : 'neutral');
-                return '<span class="diff-badge diff-badge-' . $diffClass . '">' . e(number_format($diffVal, 2)) . '</span>';
+
+                return '<span class="diff-badge diff-badge-'.$diffClass.'">'.e(number_format($diffVal, 2)).'</span>';
             })
             ->rawColumns(['sale_reference_label', 'shop_name_label', 'exchange_date_label', 'exchange_type_label', 'cost_difference_label'])
             ->make(true);
@@ -114,7 +116,7 @@ class ExchangeController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $shopIds = $user->accessibleShopIds();
 
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
@@ -142,8 +144,7 @@ class ExchangeController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
-
+        /** @var User $user */
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'sale_id' => 'required|exists:sales,id',

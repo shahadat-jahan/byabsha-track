@@ -3,9 +3,11 @@
 namespace Modules\Shop\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\PlanService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Modules\Shop\Models\Shop;
-use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class ShopController extends Controller
@@ -22,13 +24,13 @@ class ShopController extends Controller
                     return $shop->owner?->name ?? 'N/A';
                 })
                 ->addColumn('products_badge', function (Shop $shop) {
-                    return '<span class="shop-badge shop-badge-products">' . $shop->products_count . ' ' . __('shop.products_badge') . '</span>';
+                    return '<span class="shop-badge shop-badge-products">'.$shop->products_count.' '.__('shop.products_badge').'</span>';
                 })
                 ->addColumn('sales_badge', function (Shop $shop) {
-                    return '<span class="shop-badge shop-badge-sales">' . $shop->sales_count . ' ' . __('shop.sales_badge') . '</span>';
+                    return '<span class="shop-badge shop-badge-sales">'.$shop->sales_count.' '.__('shop.sales_badge').'</span>';
                 })
                 ->addColumn('branches_badge', function (Shop $shop) {
-                    return '<span class="shop-badge shop-badge-branches">' . $shop->branches_count . ' ' . __('shop.branches_badge') . '</span>';
+                    return '<span class="shop-badge shop-badge-branches">'.$shop->branches_count.' '.__('shop.branches_badge').'</span>';
                 })
                 ->addColumn('created_at_formatted', function (Shop $shop) {
                     return $shop->created_at?->format('M d, Y') ?? '-';
@@ -39,20 +41,20 @@ class ShopController extends Controller
                     $deleteUrl = route('shop.destroy', $shop->id);
 
                     return '<div class="btn-group btn-group-sm">'
-                        . '<a href="' . $viewUrl . '" class="btn btn-outline-info" title="View Details">'
-                            . '<i class="bi bi-eye"></i>'
-                        . '</a>'
-                        . '<a href="' . $editUrl . '" class="btn btn-outline-warning" title="Edit">'
-                            . '<i class="bi bi-pencil"></i>'
-                        . '</a>'
-                        . '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'' . __('shop.confirm_delete') . '\')">'
-                            . csrf_field()
-                            . method_field('DELETE')
-                            . '<button type="submit" class="btn btn-outline-danger" title="Delete">'
-                                . '<i class="bi bi-trash"></i>'
-                            . '</button>'
-                        . '</form>'
-                        . '</div>';
+                        .'<a href="'.$viewUrl.'" class="btn btn-outline-info" title="View Details">'
+                            .'<i class="bi bi-eye"></i>'
+                        .'</a>'
+                        .'<a href="'.$editUrl.'" class="btn btn-outline-warning" title="Edit">'
+                            .'<i class="bi bi-pencil"></i>'
+                        .'</a>'
+                        .'<form action="'.$deleteUrl.'" method="POST" class="d-inline" onsubmit="return confirm(\''.__('shop.confirm_delete').'\')">'
+                            .csrf_field()
+                            .method_field('DELETE')
+                            .'<button type="submit" class="btn btn-outline-danger" title="Delete">'
+                                .'<i class="bi bi-trash"></i>'
+                            .'</button>'
+                        .'</form>'
+                        .'</div>';
                 })
                 ->rawColumns(['products_badge', 'sales_badge', 'branches_badge', 'actions'])
                 ->toJson();
@@ -64,15 +66,15 @@ class ShopController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'shops')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'shops')) {
             return redirect()->route('shop.index')->with('error', 'Your plan limit for shops has been reached. Please upgrade to add more shops.');
         }
 
         // For superadmin, load available shop owners
         $shopOwners = null;
         if ($user->isSuperAdmin()) {
-            $shopOwners = \App\Models\User::where('role', 'owner')
+            $shopOwners = User::where('role', 'owner')
                 ->orWhere('role', 'superadmin')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
@@ -106,8 +108,8 @@ class ShopController extends Controller
             $validated['user_id'] = Auth::id();
         }
 
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'shops')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'shops')) {
             return redirect()->route('shop.index')->with('error', 'Your plan limit for shops has been reached. Please upgrade to add more shops.');
         }
 
@@ -121,7 +123,7 @@ class ShopController extends Controller
     {
         $user = Auth::user();
         $shop = Shop::forUser($user)->withCount(['products', 'sales', 'branches'])
-            ->with(['products' => function($query) {
+            ->with(['products' => function ($query) {
                 $query->latest()->take(10);
             }, 'branches' => function ($query) {
                 $query->latest()->take(5);
@@ -138,7 +140,7 @@ class ShopController extends Controller
 
         $shopOwners = null;
         if ($user->isSuperAdmin()) {
-            $shopOwners = \App\Models\User::where('role', 'owner')
+            $shopOwners = User::where('role', 'owner')
                 ->orWhere('role', 'superadmin')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);

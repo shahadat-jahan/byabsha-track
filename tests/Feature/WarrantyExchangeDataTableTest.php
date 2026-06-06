@@ -1,18 +1,21 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
+use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
+use App\Services\PlanService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductBatch;
 use Modules\Sale\Models\Sale;
-use Modules\Sale\Models\SaleWarranty;
 use Modules\Sale\Models\SaleExchange;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Sale\Models\SaleWarranty;
+use Modules\Shop\Models\Shop;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->mock(\App\Services\PlanService::class, function ($mock) {
+    $this->mock(PlanService::class, function ($mock) {
         $mock->shouldReceive('isFeatureEnabled')->andReturn(true);
         $mock->shouldReceive('canCreate')->andReturn(true);
     });
@@ -20,15 +23,15 @@ beforeEach(function () {
 
 test('admin can view warranties table with yajra datatable structure', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
 
     $shop = Shop::create([
         'name' => 'Warranty Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     $product = Product::create([
@@ -92,15 +95,15 @@ test('admin can view warranties table with yajra datatable structure', function 
 
 test('admin can view exchanges table with yajra datatable structure', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
 
     $shop = Shop::create([
         'name' => 'Exchange Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     $product = Product::create([

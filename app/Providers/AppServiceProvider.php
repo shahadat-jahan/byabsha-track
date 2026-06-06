@@ -2,7 +2,12 @@
 
 namespace App\Providers {
 
+    use App\Services\PlanService;
+    use Illuminate\Support\Facades\App;
+    use Illuminate\Support\Facades\Schema;
     use Illuminate\Support\ServiceProvider;
+    use Modules\Settings\Models\Setting;
+    use Modules\Subscription\Models\SubscriptionPlan;
 
     class AppServiceProvider extends ServiceProvider
     {
@@ -21,27 +26,27 @@ namespace App\Providers {
         {
             // Dynamically override config values based on settings database
             try {
-                if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                if (Schema::hasTable('settings')) {
                     // Timezone injection
-                    $timezone = \Modules\Settings\Models\Setting::get('app_timezone');
+                    $timezone = Setting::get('app_timezone');
                     if ($timezone && in_array($timezone, timezone_identifiers_list(), true)) {
                         config(['app.timezone' => $timezone]);
                         date_default_timezone_set($timezone);
                     }
 
                     // Default Language injection
-                    $defaultLang = \Modules\Settings\Models\Setting::get('default_language');
+                    $defaultLang = Setting::get('default_language');
                     if ($defaultLang) {
                         config(['app.locale' => $defaultLang]);
                         config(['app.fallback_locale' => $defaultLang]);
-                        \Illuminate\Support\Facades\App::setLocale($defaultLang);
+                        App::setLocale($defaultLang);
                     }
 
                     // Currency injection
-                    $currencySymbol = \Modules\Settings\Models\Setting::get('currency_symbol', '$');
+                    $currencySymbol = Setting::get('currency_symbol', '$');
                     config(['app.currency_symbol' => $currencySymbol]);
 
-                    $currency = \Modules\Settings\Models\Setting::get('currency', 'USD');
+                    $currency = Setting::get('currency', 'USD');
                     config(['app.currency' => $currency]);
                 }
             } catch (\Throwable $e) {
@@ -56,7 +61,8 @@ namespace App\Providers {
                     if (! $user) {
                         return false;
                     }
-                    return app(\App\Services\PlanService::class)->isFeatureEnabled($user, $feature);
+
+                    return app(PlanService::class)->isFeatureEnabled($user, $feature);
                 }
             }
 
@@ -68,9 +74,10 @@ namespace App\Providers {
                         return null;
                     }
                     $plan = $user->currentPlan();
-                    if ($plan instanceof \Modules\Subscription\Models\SubscriptionPlan) {
+                    if ($plan instanceof SubscriptionPlan) {
                         return $plan->getLimit($limitKey);
                     }
+
                     return null;
                 }
             }
@@ -82,6 +89,7 @@ namespace App\Providers {
                     if (! $user) {
                         return false;
                     }
+
                     return $user->hasModuleAccess($moduleKey);
                 }
             }
@@ -100,7 +108,7 @@ namespace {
     if (! function_exists('format_price')) {
         function format_price($amount): string
         {
-            return currency_symbol() . number_format((float)$amount, 2);
+            return currency_symbol().number_format((float) $amount, 2);
         }
     }
 }

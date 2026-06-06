@@ -3,6 +3,7 @@
 namespace Modules\Sale\Models;
 
 use App\Models\TenantModel;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Modules\Shop\Models\Shop;
 
@@ -36,7 +37,7 @@ class SaleWarranty extends TenantModel
 
     public function getIsWithinServicePeriodAttribute(): bool
     {
-        return $this->status === 'active' && $this->end_date && !$this->end_date->isPast();
+        return $this->status === 'active' && $this->end_date && ! $this->end_date->isPast();
     }
 
     public function sale()
@@ -51,7 +52,7 @@ class SaleWarranty extends TenantModel
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by')->withTrashed();
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 
     public function scopeWithEffectiveStatus($query)

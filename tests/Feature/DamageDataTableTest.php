@@ -1,14 +1,17 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
+use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
-use Modules\Damage\Models\Damage;
+use App\Services\PlanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Damage\Models\Damage;
+use Modules\Shop\Models\Shop;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->mock(\App\Services\PlanService::class, function ($mock) {
+    $this->mock(PlanService::class, function ($mock) {
         $mock->shouldReceive('isFeatureEnabled')->andReturn(true);
         $mock->shouldReceive('canCreate')->andReturn(true);
     });
@@ -16,15 +19,15 @@ beforeEach(function () {
 
 test('admin can view damages table with yajra datatable structure', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
 
     $shop = Shop::create([
         'name' => 'Damage Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // Create a Damage record
@@ -55,8 +58,8 @@ test('admin can view damages table with yajra datatable structure', function () 
 
 test('admin cannot view damages table for unauthorized shop', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
@@ -64,12 +67,12 @@ test('admin cannot view damages table for unauthorized shop', function () {
 
     $shop = Shop::create([
         'name' => 'Damage Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     $otherShop = Shop::create([
         'name' => 'Other Test Shop',
-        'user_id' => $otherOwner->id
+        'user_id' => $otherOwner->id,
     ]);
 
     // Create a Damage record in the other shop

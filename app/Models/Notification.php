@@ -34,7 +34,7 @@ class Notification extends Model
      */
     public function markAsRead(): void
     {
-        if (!$this->read_at) {
+        if (! $this->read_at) {
             $this->update(['read_at' => now()]);
         }
     }
@@ -68,15 +68,15 @@ class Notification extends Model
      */
     public function getIconAttribute(): string
     {
-        return match($this->type) {
-            'low_stock'        => 'bi-exclamation-triangle-fill text-warning',
-            'daily_summary'    => 'bi-calendar-check text-info',
-            'system_update'    => 'bi-gear text-primary',
-            'user_activity'    => 'bi-person text-success',
-            'payment_request'  => 'bi-wallet2 text-warning',
+        return match ($this->type) {
+            'low_stock' => 'bi-exclamation-triangle-fill text-warning',
+            'daily_summary' => 'bi-calendar-check text-info',
+            'system_update' => 'bi-gear text-primary',
+            'user_activity' => 'bi-person text-success',
+            'payment_request' => 'bi-wallet2 text-warning',
             'payment_approved' => 'bi-check-circle-fill text-success',
             'payment_rejected' => 'bi-x-circle-fill text-danger',
-            default            => 'bi-bell text-secondary',
+            default => 'bi-bell text-secondary',
         };
     }
 }

@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Models\User;
-use Modules\Subscription\Models\SubscriptionPlan;
-use Modules\Shop\Models\Shop;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Product\Models\Product;
 use Modules\Sale\Models\Sale;
+use Modules\Shop\Models\Shop;
+use Modules\Subscription\Models\SubscriptionPlan;
 
 class PlanService
 {
@@ -30,6 +30,7 @@ class PlanService
     protected function configPlanFallback(string $slug): array
     {
         $plans = config('subscription_plans.plans', []);
+
         return $plans[$slug] ?? $plans['free'] ?? [];
     }
 
@@ -67,20 +68,25 @@ class PlanService
         switch ($resource) {
             case 'shops':
                 $count = Shop::where('user_id', $user->id)->count();
+
                 return $count < $limit;
             case 'brands':
                 $count = Brand::where('user_id', $user->id)->count();
+
                 return $count < $limit;
             case 'categories':
                 $count = Category::where('user_id', $user->id)->count();
+
                 return $count < $limit;
             case 'products':
                 $shopIds = Shop::where('user_id', $user->id)->pluck('id')->toArray();
                 $count = Product::whereIn('shop_id', $shopIds)->count();
+
                 return $count < $limit;
             case 'sales':
                 $shopIds = Shop::where('user_id', $user->id)->pluck('id')->toArray();
                 $count = Sale::whereIn('shop_id', $shopIds)->count();
+
                 return $count < $limit;
         }
 

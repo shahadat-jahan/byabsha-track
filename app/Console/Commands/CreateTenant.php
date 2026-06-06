@@ -38,24 +38,25 @@ class CreateTenant extends Command
         );
 
         if ($validator->fails()) {
-            $this->error('Invalid or already-used email: ' . $email);
+            $this->error('Invalid or already-used email: '.$email);
+
             return self::FAILURE;
         }
 
         //  Password
         $password = $this->option('password') ?? Str::random(16);
-        $autoPassword = !$this->option('password');
+        $autoPassword = ! $this->option('password');
 
         //  Shop name
         $shopName = $this->option('shop') ?? $tenantName;
 
         //  Subscription plan
-        $planSlug  = $this->option('plan') ?? 'trial';
+        $planSlug = $this->option('plan') ?? 'trial';
         $trialDays = (int) ($this->option('days') ?? 30);
 
         $plan = SubscriptionPlan::where('slug', $planSlug)->first();
 
-        if (!$plan) {
+        if (! $plan) {
             // Fall back to any trial plan, then to free plan
             $plan = SubscriptionPlan::where('is_trial', true)->where('is_active', true)->first()
                 ?? SubscriptionPlan::freePlan();
@@ -77,8 +78,9 @@ class CreateTenant extends Command
         }
         $this->newLine();
 
-        if (!$this->confirm('Proceed with creation?', true)) {
+        if (! $this->confirm('Proceed with creation?', true)) {
             $this->info('Aborted.');
+
             return self::SUCCESS;
         }
 
@@ -89,15 +91,15 @@ class CreateTenant extends Command
             ) {
                 // 1. Owner user
                 $owner = User::create([
-                    'name'     => $tenantName,
-                    'email'    => $email,
+                    'name' => $tenantName,
+                    'email' => $email,
                     'password' => Hash::make($password),
-                    'role'     => 'owner',
+                    'role' => 'owner',
                 ]);
 
                 // 2. Shop
                 $shop = Shop::create([
-                    'name'    => $shopName,
+                    'name' => $shopName,
                     'user_id' => $owner->id,
                 ]);
 
@@ -109,26 +111,27 @@ class CreateTenant extends Command
                 $subscription = null;
                 if ($plan->exists) {
                     $subscription = Subscription::create([
-                        'user_id'              => $owner->id,
-                        'shop_id'              => $shop->id,
+                        'user_id' => $owner->id,
+                        'shop_id' => $shop->id,
                         'subscription_plan_id' => $plan->id,
-                        'status'               => 'active',
-                        'starts_at'            => now(),
-                        'ends_at'              => $endsAt,
+                        'status' => 'active',
+                        'starts_at' => now(),
+                        'ends_at' => $endsAt,
                     ]);
                 }
 
                 return compact('owner', 'shop', 'subscription');
             });
         } catch (\Throwable $e) {
-            $this->error('Creation failed: ' . $e->getMessage());
+            $this->error('Creation failed: '.$e->getMessage());
+
             return self::FAILURE;
         }
 
         // Success output
         $owner = $result['owner'];
-        $shop  = $result['shop'];
-        $sub   = $result['subscription'];
+        $shop = $result['shop'];
+        $sub = $result['subscription'];
 
         $this->newLine();
         $this->line('  <fg=green;options=bold>✓ Tenant created successfully</>');
@@ -143,7 +146,7 @@ class CreateTenant extends Command
                 ['Role',       $owner->role],
                 ['Shop ID',    $shop->id],
                 ['Shop Name',  $shop->name],
-                ['Plan',       $plan->name . ' (' . $plan->slug . ')'],
+                ['Plan',       $plan->name.' ('.$plan->slug.')'],
                 ['Sub Status', $sub?->status ?? 'none'],
                 ['Expires',    $sub?->ends_at?->toDateString() ?? 'never'],
             ]

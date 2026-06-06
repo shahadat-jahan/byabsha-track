@@ -13,7 +13,7 @@ return new class extends Migration
         DB::table('settings')->whereIn('key', [
             'date_format',
             'time_format',
-            'pagination_limit'
+            'pagination_limit',
         ])->delete();
     }
 

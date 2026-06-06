@@ -3,6 +3,8 @@
 namespace Modules\Branch\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -14,12 +16,12 @@ class BranchController extends Controller
 {
     public function index(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
         $selectedShopId = $request->integer('shop_id');
 
-        if ($selectedShopId && !$user->ownsShop($selectedShopId)) {
+        if ($selectedShopId && ! $user->ownsShop($selectedShopId)) {
             abort(403, 'You do not have access to this shop.');
         }
 
@@ -39,9 +41,10 @@ class BranchController extends Controller
                 })
                 ->addColumn('status', function (Branch $branch) {
                     if ($branch->is_active) {
-                        return '<span class="status-badge status-active"><i class="bi bi-check-circle-fill"></i>' . __('branch::branch.active') . '</span>';
+                        return '<span class="status-badge status-active"><i class="bi bi-check-circle-fill"></i>'.__('branch::branch.active').'</span>';
                     }
-                    return '<span class="status-badge status-inactive"><i class="bi bi-dash-circle"></i>' . __('branch::branch.inactive') . '</span>';
+
+                    return '<span class="status-badge status-inactive"><i class="bi bi-dash-circle"></i>'.__('branch::branch.inactive').'</span>';
                 })
                 ->addColumn('created_at_formatted', function (Branch $branch) {
                     return $branch->created_at?->format('M d, Y') ?? '-';
@@ -52,20 +55,20 @@ class BranchController extends Controller
                     $deleteUrl = route('branch.destroy', $branch->id);
 
                     return '<div class="d-flex gap-1 justify-content-center">'
-                        . '<a href="' . $viewUrl . '" class="btn btn-outline-info action-btn" title="' . __('app.view') . '">'
-                            . '<i class="bi bi-eye"></i>'
-                        . '</a>'
-                        . '<a href="' . $editUrl . '" class="btn btn-outline-warning action-btn" title="' . __('app.edit') . '">'
-                            . '<i class="bi bi-pencil"></i>'
-                        . '</a>'
-                        . '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'' . __('branch::branch.confirm_delete') . '\')">'
-                            . csrf_field()
-                            . method_field('DELETE')
-                            . '<button type="submit" class="btn btn-outline-danger action-btn" title="' . __('app.delete') . '">'
-                                . '<i class="bi bi-trash"></i>'
-                            . '</button>'
-                        . '</form>'
-                        . '</div>';
+                        .'<a href="'.$viewUrl.'" class="btn btn-outline-info action-btn" title="'.__('app.view').'">'
+                            .'<i class="bi bi-eye"></i>'
+                        .'</a>'
+                        .'<a href="'.$editUrl.'" class="btn btn-outline-warning action-btn" title="'.__('app.edit').'">'
+                            .'<i class="bi bi-pencil"></i>'
+                        .'</a>'
+                        .'<form action="'.$deleteUrl.'" method="POST" class="d-inline" onsubmit="return confirm(\''.__('branch::branch.confirm_delete').'\')">'
+                            .csrf_field()
+                            .method_field('DELETE')
+                            .'<button type="submit" class="btn btn-outline-danger action-btn" title="'.__('app.delete').'">'
+                                .'<i class="bi bi-trash"></i>'
+                            .'</button>'
+                        .'</form>'
+                        .'</div>';
                 })
                 ->rawColumns(['status', 'actions'])
                 ->toJson();
@@ -76,16 +79,16 @@ class BranchController extends Controller
 
     public function create(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'branches')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'branches')) {
             return redirect()->route('branch.index')->with('error', 'Branches are not available on your current plan. Please upgrade to access this feature.');
         }
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
         $selectedShopId = $request->integer('shop_id');
 
-        if ($selectedShopId && !$user->ownsShop($selectedShopId)) {
+        if ($selectedShopId && ! $user->ownsShop($selectedShopId)) {
             abort(403, 'You do not have access to this shop.');
         }
 
@@ -94,10 +97,10 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'branches')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'branches')) {
             return redirect()->route('branch.index')->with('error', 'Branches are not available on your current plan. Please upgrade to access this feature.');
         }
 
@@ -131,7 +134,7 @@ class BranchController extends Controller
 
     public function show($id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $branch = Branch::forUser($user)->with(['shop:id,name', 'creator:id,name'])->findOrFail($id);
 
@@ -140,7 +143,7 @@ class BranchController extends Controller
 
     public function edit($id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $branch = Branch::forUser($user)->with('shop:id,name')->findOrFail($id);
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
@@ -150,7 +153,7 @@ class BranchController extends Controller
 
     public function update(Request $request, $id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $branch = Branch::forUser($user)->findOrFail($id);
 
@@ -185,7 +188,7 @@ class BranchController extends Controller
 
     public function destroy($id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $branch = Branch::forUser($user)->findOrFail($id);
         $branch->delete();

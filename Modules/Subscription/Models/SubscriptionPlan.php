@@ -14,16 +14,16 @@ class SubscriptionPlan extends Model
     ];
 
     protected $casts = [
-        'duration_days'         => 'integer',
-        'has_capital'           => 'boolean',
-        'has_restock'           => 'boolean',
-        'has_reports'           => 'boolean',
-        'has_priority_support'  => 'boolean',
-        'is_active'             => 'boolean',
-        'is_trial'              => 'boolean',
-        'features'              => 'array',
-        'limits'                => 'array',
-        'meta'                  => 'array',
+        'duration_days' => 'integer',
+        'has_capital' => 'boolean',
+        'has_restock' => 'boolean',
+        'has_reports' => 'boolean',
+        'has_priority_support' => 'boolean',
+        'is_active' => 'boolean',
+        'is_trial' => 'boolean',
+        'features' => 'array',
+        'limits' => 'array',
+        'meta' => 'array',
     ];
 
     public function isActive(): bool
@@ -86,7 +86,8 @@ class SubscriptionPlan extends Model
         if ($this->isFree()) {
             return 'Free';
         }
-        return '' . number_format($this->price) . '/' . $this->billing_cycle;
+
+        return ''.number_format($this->price).'/'.$this->billing_cycle;
     }
 
     /**
@@ -95,12 +96,12 @@ class SubscriptionPlan extends Model
     public function getFeature(string $key, $default = false)
     {
         $map = [
-            'branches'   => 'branch',
-            'capitals'   => 'capital',
-            'damages'    => 'damage',
-            'stocks'     => 'stock',
-            'reports'    => 'report',
-            'daily_pl'   => 'report',
+            'branches' => 'branch',
+            'capitals' => 'capital',
+            'damages' => 'damage',
+            'stocks' => 'stock',
+            'reports' => 'report',
+            'daily_pl' => 'report',
             'monthly_pl' => 'report',
         ];
 
@@ -112,11 +113,11 @@ class SubscriptionPlan extends Model
         }
 
         $legacyMap = [
-            'capital'  => 'has_capital',
+            'capital' => 'has_capital',
             'capitals' => 'has_capital',
-            'restock'  => 'has_restock',
-            'report'   => 'has_reports',
-            'reports'  => 'has_reports',
+            'restock' => 'has_restock',
+            'report' => 'has_reports',
+            'reports' => 'has_reports',
         ];
 
         $legacyField = $legacyMap[$normalizedKey] ?? $legacyMap[$key] ?? null;

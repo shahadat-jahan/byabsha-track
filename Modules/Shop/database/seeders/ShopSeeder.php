@@ -2,6 +2,7 @@
 
 namespace Modules\Shop\Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Modules\Shop\Models\Shop;
 
@@ -18,7 +19,7 @@ class ShopSeeder extends Seeder
             ['name' => 'Mousumi Electronics'],
         ];
 
-        $owner = \App\Models\User::where('role', 'owner')->first();
+        $owner = User::where('role', 'owner')->first();
         $userId = $owner?->id;
 
         foreach ($shops as $shop) {

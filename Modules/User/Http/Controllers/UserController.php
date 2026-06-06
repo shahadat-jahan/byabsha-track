@@ -45,7 +45,7 @@ class UserController extends Controller
 
         $selected = $validated['module_access'] ?? null;
 
-        if (!is_array($selected) || count($selected) === 0) {
+        if (! is_array($selected) || count($selected) === 0) {
             $selected = $allowedKeys;
         }
 
@@ -75,8 +75,8 @@ class UserController extends Controller
         $user->name = $validated['name'];
         $user->email = $validated['email'];
 
-        if (!empty($validated['new_password'])) {
-            if (!Hash::check((string) $validated['current_password'], (string) $user->password)) {
+        if (! empty($validated['new_password'])) {
+            if (! Hash::check((string) $validated['current_password'], (string) $user->password)) {
                 return back()
                     ->withErrors(['current_password' => __('user.current_password_invalid')])
                     ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
@@ -121,13 +121,13 @@ class UserController extends Controller
                     ->where('role', 'manager')
                     ->where(function ($q) {
                         $q->whereNull('is_approved')
-                          ->orWhere('is_approved', false);
+                            ->orWhere('is_approved', false);
                     });
             } elseif ($status === 'active') {
                 $query->whereNull('deleted_at')
                     ->where(function ($q) {
                         $q->where('role', '!=', 'manager')
-                          ->orWhere('is_approved', true);
+                            ->orWhere('is_approved', true);
                     });
             }
         }
@@ -139,36 +139,39 @@ class UserController extends Controller
                 if ($searchTerm !== '') {
                     $q->where(function ($subQ) use ($searchTerm) {
                         $subQ->where('name', 'like', "%{$searchTerm}%")
-                             ->orWhere('email', 'like', "%{$searchTerm}%");
+                            ->orWhere('email', 'like', "%{$searchTerm}%");
                     });
                 }
             })
             ->editColumn('name', function ($user) {
                 $youHtml = '';
                 if ($user->id === auth()->id()) {
-                    $youHtml = ' <span class="you-chip ms-1">' . __('user.you') . '</span>';
+                    $youHtml = ' <span class="you-chip ms-1">'.__('user.you').'</span>';
                 }
-                return '<strong class="user-name">' . e($user->name) . '</strong>' . $youHtml;
+
+                return '<strong class="user-name">'.e($user->name).'</strong>'.$youHtml;
             })
             ->editColumn('email', function ($user) {
                 return e($user->email);
             })
             ->editColumn('role', function ($user) {
-                $class = match($user->role) {
+                $class = match ($user->role) {
                     'superadmin' => 'badge-superadmin',
                     'manager' => 'badge-manager',
                     default => 'badge-owner',
                 };
-                return '<span class="role-badge ' . $class . '">' . __('user.role_' . $user->role) . '</span>';
+
+                return '<span class="role-badge '.$class.'">'.__('user.role_'.$user->role).'</span>';
             })
             ->addColumn('shop_branch', function ($user) {
                 if ($user->role === 'manager') {
                     $shopName = $user->assignedShop?->name;
                     $branchName = $user->assignedBranch?->name;
                     if ($shopName) {
-                        return e($shopName) . ($branchName ? ' (' . e($branchName) . ')' : '');
+                        return e($shopName).($branchName ? ' ('.e($branchName).')' : '');
                     }
                 }
+
                 return '-';
             })
             ->editColumn('created_at', function ($user) {
@@ -176,11 +179,11 @@ class UserController extends Controller
             })
             ->addColumn('status', function ($user) {
                 if ($user->trashed()) {
-                    return '<span class="status-badge status-deactive">' . __('user.deactive') . '</span>';
+                    return '<span class="status-badge status-deactive">'.__('user.deactive').'</span>';
                 } elseif ($user->isPendingApproval()) {
-                    return '<span class="status-badge status-pending"><i class="bi bi-clock-history me-1"></i>' . __('user.pending_approval') . '</span>';
+                    return '<span class="status-badge status-pending"><i class="bi bi-clock-history me-1"></i>'.__('user.pending_approval').'</span>';
                 } else {
-                    return '<span class="status-badge status-active">' . __('user.active') . '</span>';
+                    return '<span class="status-badge status-active">'.__('user.active').'</span>';
                 }
             })
             ->addColumn('actions', function ($user) {
@@ -189,7 +192,7 @@ class UserController extends Controller
                 $activateUrl = route('user.activate', $user->id);
                 $deactivateUrl = route('user.deactivate', $user->id);
                 $approveUrl = route('user.approve.form', $user->id);
-                
+
                 $csrfToken = csrf_token();
                 $confirmDeactivate = __('user.confirm_deactivate');
                 $confirmActivate = __('user.confirm_activate');
@@ -199,7 +202,7 @@ class UserController extends Controller
                 $approveLabel = __('user.approve_title');
 
                 // View Details
-                $html = '<a href="' . $showUrl . '" class="btn btn-sm btn-row-action btn-row-view" title="' . __('app.view') . '"><i class="bi bi-eye"></i></a> ';
+                $html = '<a href="'.$showUrl.'" class="btn btn-sm btn-row-action btn-row-view" title="'.__('app.view').'"><i class="bi bi-eye"></i></a> ';
 
                 // Dropdown trigger
                 $html .= '<div class="d-inline-block dropdown">';
@@ -208,24 +211,24 @@ class UserController extends Controller
 
                 if ($user->trashed()) {
                     $html .= '<li>';
-                    $html .= '<form action="' . $activateUrl . '" method="POST" onsubmit="return confirm(\'' . e($confirmActivate) . '\')">';
-                    $html .= '<input type="hidden" name="_token" value="' . $csrfToken . '">';
-                    $html .= '<button type="submit" class="dropdown-item text-success"><i class="bi bi-arrow-counterclockwise me-2"></i>' . $activateLabel . '</button>';
+                    $html .= '<form action="'.$activateUrl.'" method="POST" onsubmit="return confirm(\''.e($confirmActivate).'\')">';
+                    $html .= '<input type="hidden" name="_token" value="'.$csrfToken.'">';
+                    $html .= '<button type="submit" class="dropdown-item text-success"><i class="bi bi-arrow-counterclockwise me-2"></i>'.$activateLabel.'</button>';
                     $html .= '</form>';
                     $html .= '</li>';
                 } else {
                     if ($user->isPendingApproval()) {
-                        $html .= '<li><a class="dropdown-item text-warning" href="' . $approveUrl . '"><i class="bi bi-person-check me-2"></i>' . $approveLabel . '</a></li>';
+                        $html .= '<li><a class="dropdown-item text-warning" href="'.$approveUrl.'"><i class="bi bi-person-check me-2"></i>'.$approveLabel.'</a></li>';
                     } else {
-                        $html .= '<li><a class="dropdown-item text-primary" href="' . $editUrl . '"><i class="bi bi-pencil me-2"></i>' . $editLabel . '</a></li>';
+                        $html .= '<li><a class="dropdown-item text-primary" href="'.$editUrl.'"><i class="bi bi-pencil me-2"></i>'.$editLabel.'</a></li>';
                     }
 
                     if ($user->id !== auth()->id()) {
                         $html .= '<li><hr class="dropdown-divider" style="border-color: #e4edf6;"></li>';
                         $html .= '<li>';
-                        $html .= '<form action="' . $deactivateUrl . '" method="POST" onsubmit="return confirm(\'' . e($confirmDeactivate) . '\')">';
-                        $html .= '<input type="hidden" name="_token" value="' . $csrfToken . '">';
-                        $html .= '<button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>' . $deactivateLabel . '</button>';
+                        $html .= '<form action="'.$deactivateUrl.'" method="POST" onsubmit="return confirm(\''.e($confirmDeactivate).'\')">';
+                        $html .= '<input type="hidden" name="_token" value="'.$csrfToken.'">';
+                        $html .= '<button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>'.$deactivateLabel.'</button>';
                         $html .= '</form>';
                         $html .= '</li>';
                     }
@@ -279,7 +282,7 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
 
         if ($role === 'manager') {
-            $hasAssignment = !empty($validated['shop_id']) && !empty($validated['branch_id']);
+            $hasAssignment = ! empty($validated['shop_id']) && ! empty($validated['branch_id']);
             $validated['is_approved'] = $hasAssignment ? true : false;
             $validated['shop_id'] = $validated['shop_id'] ?? null;
             $validated['branch_id'] = $validated['branch_id'] ?? null;
@@ -300,6 +303,7 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::withTrashed()->with(['assignedShop', 'assignedBranch'])->findOrFail($id);
+
         return view('user::show', compact('user'));
     }
 
@@ -341,7 +345,7 @@ class UserController extends Controller
 
         $validated = $request->validate($rules);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -352,7 +356,7 @@ class UserController extends Controller
         if ($role === 'manager') {
             $validated['shop_id'] = $validated['shop_id'] ?? null;
             $validated['branch_id'] = $validated['branch_id'] ?? null;
-            if (!empty($validated['shop_id']) && !empty($validated['branch_id']) && !$user->is_approved) {
+            if (! empty($validated['shop_id']) && ! empty($validated['branch_id']) && ! $user->is_approved) {
                 $validated['is_approved'] = true;
             }
         } else {

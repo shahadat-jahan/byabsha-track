@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Subscription;
-use Modules\Shop\Models\Shop;
+use App\Models\User;
 use Modules\Product\Models\Product;
 use Modules\Sale\Models\Sale;
+use Modules\Shop\Models\Shop;
 
 class SubscriptionLimitService
 {
@@ -52,13 +52,13 @@ class SubscriptionLimitService
      */
     public function canCreateShop(): bool
     {
-        return !$this->hasReachedShopLimit();
+        return ! $this->hasReachedShopLimit();
     }
 
     /**
      * Check if user has reached product creation limit for a shop.
      */
-    public function hasReachedProductLimit(int $shopId = null): bool
+    public function hasReachedProductLimit(?int $shopId = null): bool
     {
         if ($this->user->isSuperAdmin()) {
             return false;
@@ -99,9 +99,9 @@ class SubscriptionLimitService
     /**
      * Check if user can create more products.
      */
-    public function canCreateProduct(int $shopId = null): bool
+    public function canCreateProduct(?int $shopId = null): bool
     {
-        return !$this->hasReachedProductLimit($shopId);
+        return ! $this->hasReachedProductLimit($shopId);
     }
 
     /**
@@ -143,7 +143,7 @@ class SubscriptionLimitService
      */
     public function canCreateSale(): bool
     {
-        return !$this->hasReachedSalesLimit();
+        return ! $this->hasReachedSalesLimit();
     }
 
     /**
@@ -161,7 +161,7 @@ class SubscriptionLimitService
             return 0;
         }
 
-        $usage = match($feature) {
+        $usage = match ($feature) {
             'max_shops' => $this->user->shops()->count(),
             'max_products' => Product::whereIn('shop_id', $this->user->getShopIds())
                 ->where('deleted_at', null)

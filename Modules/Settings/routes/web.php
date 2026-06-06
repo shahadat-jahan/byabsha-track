@@ -6,7 +6,7 @@ use Modules\Settings\Http\Controllers\SettingsController;
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
-        
+
         // Backward-compatibility redirects
         Route::get('/general', function () {
             return redirect()->route('settings.dashboard');

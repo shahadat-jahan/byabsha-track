@@ -1,15 +1,18 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
+use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
+use App\Services\PlanService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Product\Models\Product;
 use Modules\Restock\Models\Restock;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Shop\Models\Shop;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->mock(\App\Services\PlanService::class, function ($mock) {
+    $this->mock(PlanService::class, function ($mock) {
         $mock->shouldReceive('isFeatureEnabled')->andReturn(true);
         $mock->shouldReceive('canCreate')->andReturn(true);
     });
@@ -17,8 +20,8 @@ beforeEach(function () {
 
 test('admin can view restocks table with yajra datatable structure', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -26,7 +29,7 @@ test('admin can view restocks table with yajra datatable structure', function ()
 
     $shop = Shop::create([
         'name' => 'Restock Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     $product = Product::create([

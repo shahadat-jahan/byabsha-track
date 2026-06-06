@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Modules\Subscription\Models\Subscription;
+use Modules\Subscription\Models\SubscriptionPlan;
 
 class AuthController extends Controller
 {
@@ -89,18 +91,18 @@ class AuthController extends Controller
         ]);
 
         // Provision a 1-month free trial subscription for new owners
-        if (!$isManager) {
-            $freePlan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', 'free')
+        if (! $isManager) {
+            $freePlan = SubscriptionPlan::where('slug', 'free')
                 ->where('is_trial', true)
                 ->first();
 
             if ($freePlan) {
-                \Modules\Subscription\Models\Subscription::create([
-                    'user_id'              => $user->id,
+                Subscription::create([
+                    'user_id' => $user->id,
                     'subscription_plan_id' => $freePlan->id,
-                    'status'               => 'active',
-                    'starts_at'            => now(),
-                    'ends_at'              => now()->addDays($freePlan->trial_days ?? 30),
+                    'status' => 'active',
+                    'starts_at' => now(),
+                    'ends_at' => now()->addDays($freePlan->trial_days ?? 30),
                 ]);
             }
         }
@@ -123,6 +125,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('landing.index');
     }
 }

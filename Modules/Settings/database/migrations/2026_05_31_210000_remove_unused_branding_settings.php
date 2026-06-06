@@ -19,7 +19,7 @@ return new class extends Migration
             'social_facebook',
             'social_twitter',
             'social_instagram',
-            'social_linkedin'
+            'social_linkedin',
         ])->delete();
     }
 

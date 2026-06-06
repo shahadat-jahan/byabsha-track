@@ -3,12 +3,13 @@
 namespace Modules\Product\Models;
 
 use App\Models\TenantModel;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Category\Models\Category;
-use Modules\Shop\Models\Shop;
-use Modules\Sale\Models\Sale;
 use Modules\Restock\Models\Restock;
+use Modules\Sale\Models\Sale;
+use Modules\Shop\Models\Shop;
 
 class Product extends TenantModel
 {
@@ -48,7 +49,7 @@ class Product extends TenantModel
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by')->withTrashed();
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 
     public function productCategory()

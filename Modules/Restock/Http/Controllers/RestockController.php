@@ -3,15 +3,16 @@
 namespace Modules\Restock\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Log;
-use Modules\Restock\Services\RestockService;
-use Modules\Shop\Models\Shop;
-use Modules\Product\Models\Product;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductDynamicValue;
 use Modules\Restock\Models\Restock;
+use Modules\Restock\Services\RestockService;
+use Modules\Shop\Models\Shop;
 use Yajra\DataTables\Facades\DataTables;
 
 class RestockController extends Controller
@@ -78,10 +79,10 @@ class RestockController extends Controller
                 $search = request('search')['value'] ?? null;
                 if ($search) {
                     $q->where(function ($sub) use ($search) {
-                        $sub->where('products.name', 'like', '%' . $search . '%')
-                           ->orWhere('product_batches.batch_code', 'like', '%' . $search . '%')
-                           ->orWhere('shops.name', 'like', '%' . $search . '%')
-                           ->orWhere('restocks.note', 'like', '%' . $search . '%');
+                        $sub->where('products.name', 'like', '%'.$search.'%')
+                            ->orWhere('product_batches.batch_code', 'like', '%'.$search.'%')
+                            ->orWhere('shops.name', 'like', '%'.$search.'%')
+                            ->orWhere('restocks.note', 'like', '%'.$search.'%');
                     });
                 }
             }, false)
@@ -89,7 +90,7 @@ class RestockController extends Controller
                 return $restock->restock_date->format('d M Y');
             })
             ->addColumn('shop_name_label', function (Restock $restock) {
-                return '<span class="shop-pill">' . e($restock->shop_name ?? 'Deleted shop') . '</span>';
+                return '<span class="shop-pill">'.e($restock->shop_name ?? 'Deleted shop').'</span>';
             })
             ->addColumn('batch_label', function (Restock $restock) {
                 return e($restock->batch_code ?? '-');
@@ -99,31 +100,34 @@ class RestockController extends Controller
                 if (is_string($attrs)) {
                     $attrs = json_decode($attrs, true);
                 }
-                if (!is_array($attrs) || empty($attrs)) {
+                if (! is_array($attrs) || empty($attrs)) {
                     return '-';
                 }
+
                 return collect($attrs)
-                    ->map(fn($item) => ($item['label'] ?? $item['field_key'] ?? 'Attribute') . ': ' . ($item['value'] ?? ''))
+                    ->map(fn ($item) => ($item['label'] ?? $item['field_key'] ?? 'Attribute').': '.($item['value'] ?? ''))
                     ->implode(' | ');
             })
             ->editColumn('quantity', function (Restock $restock) {
-                return '<span class="qty-pill">+' . number_format($restock->quantity) . '</span>';
+                return '<span class="qty-pill">+'.number_format($restock->quantity).'</span>';
             })
             ->editColumn('purchase_price_per_unit', function (Restock $restock) {
                 return number_format($restock->purchase_price_per_unit, 2);
             })
             ->editColumn('total_cost', function (Restock $restock) {
-                return '<strong>' . number_format($restock->total_cost, 2) . '</strong>';
+                return '<strong>'.number_format($restock->total_cost, 2).'</strong>';
             })
             ->addColumn('current_stock_label', function (Restock $restock) {
                 $stock = $restock->product_stock_quantity;
                 $class = $stock > 0 ? 'stock-pill-ok' : 'stock-pill-out';
-                return '<span class="stock-pill ' . $class . '">' . ($stock !== null ? number_format($stock) : 'N/A') . '</span>';
+
+                return '<span class="stock-pill '.$class.'">'.($stock !== null ? number_format($stock) : 'N/A').'</span>';
             })
             ->editColumn('note', function (Restock $restock) {
                 if ($restock->note) {
-                    return '<span class="text-muted small" title="' . e($restock->note) . '">' . e(\Str::limit($restock->note, 30)) . '</span>';
+                    return '<span class="text-muted small" title="'.e($restock->note).'">'.e(\Str::limit($restock->note, 30)).'</span>';
                 }
+
                 return '<span class="text-muted">—</span>';
             })
             ->addColumn('actions', function (Restock $restock) {
@@ -132,19 +136,19 @@ class RestockController extends Controller
                 $deleteUrl = route('restock.destroy', $restock->id);
                 $confirmMsg = __('restock.confirm_delete');
 
-                $deleteForm = '<form action="' . e($deleteUrl) . '" method="POST" class="d-inline" onsubmit="return confirm(\'' . e($confirmMsg) . '\')">'
-                    . csrf_field()
-                    . method_field('DELETE')
-                    . '<button type="submit" class="btn btn-sm btn-row-action btn-row-delete" title="' . e(__('app.delete')) . '">'
-                    . '<i class="bi bi-trash"></i>'
-                    . '</button>'
-                    . '</form>';
+                $deleteForm = '<form action="'.e($deleteUrl).'" method="POST" class="d-inline" onsubmit="return confirm(\''.e($confirmMsg).'\')">'
+                    .csrf_field()
+                    .method_field('DELETE')
+                    .'<button type="submit" class="btn btn-sm btn-row-action btn-row-delete" title="'.e(__('app.delete')).'">'
+                    .'<i class="bi bi-trash"></i>'
+                    .'</button>'
+                    .'</form>';
 
                 return '<div class="d-flex gap-1 justify-content-end">'
-                    . '<a href="' . e($batchUrl) . '" class="btn btn-sm btn-row-action" style="color:#0f766e;border-color:rgba(15,118,110,.35);background:#fff;" title="View Batch Tracker"><i class="bi bi-layers"></i></a>'
-                    . '<a href="' . e($editUrl) . '" class="btn btn-sm btn-row-action btn-row-edit" title="' . e(__('app.edit')) . '"><i class="bi bi-pencil"></i></a>'
-                    . $deleteForm
-                    . '</div>';
+                    .'<a href="'.e($batchUrl).'" class="btn btn-sm btn-row-action" style="color:#0f766e;border-color:rgba(15,118,110,.35);background:#fff;" title="View Batch Tracker"><i class="bi bi-layers"></i></a>'
+                    .'<a href="'.e($editUrl).'" class="btn btn-sm btn-row-action btn-row-edit" title="'.e(__('app.edit')).'"><i class="bi bi-pencil"></i></a>'
+                    .$deleteForm
+                    .'</div>';
             })
             ->rawColumns(['shop_name_label', 'quantity', 'total_cost', 'current_stock_label', 'note', 'actions'])
             ->toJson();
@@ -153,15 +157,15 @@ class RestockController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'restock')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'restock')) {
             return redirect()->route('restock.index')->with('error', 'Restock is not available on your current plan. Please upgrade to access this feature.');
         }
         $shops = Shop::forUser($user)->get();
         $products = Product::with('shop')->whereIn('shop_id', $user->accessibleShopIds())->get();
 
         // Pre-fill shop/product when arriving from the batch tracker page
-        $prefilledShopId    = request()->integer('shop_id') ?: null;
+        $prefilledShopId = request()->integer('shop_id') ?: null;
         $prefilledProductId = request()->integer('product_id') ?: null;
 
         return view('restock::create', compact('shops', 'products', 'prefilledShopId', 'prefilledProductId'));
@@ -170,8 +174,8 @@ class RestockController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'restock')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'restock')) {
             return redirect()->route('restock.index')->with('error', 'Restock is not available on your current plan. Please upgrade to access this feature.');
         }
 
@@ -191,7 +195,7 @@ class RestockController extends Controller
             ->where('shop_id', $validated['shop_id'])
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return back()->withInput()
                 ->withErrors(['product_id' => __('restock.product_shop_mismatch')]);
         }
@@ -244,7 +248,7 @@ class RestockController extends Controller
             ->where('shop_id', $validated['shop_id'])
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return back()->withInput()
                 ->withErrors(['product_id' => __('restock.product_shop_mismatch')]);
         }
@@ -269,14 +273,15 @@ class RestockController extends Controller
         $restock = $this->restockService->getRestock($id);
         abort_unless($user->ownsShop((int) $restock->shop_id), 403, 'You do not have access to this shop.');
 
-        Log::info('Destroy method called with ID: ' . $id);
+        Log::info('Destroy method called with ID: '.$id);
         try {
             $this->restockService->deleteRestock($id);
             Log::info('Restock deleted successfully');
+
             return redirect()->route('restock.index')
                 ->with('success', __('restock.deleted'));
         } catch (\Exception $e) {
-            Log::error('Delete failed: ' . $e->getMessage());
+            Log::error('Delete failed: '.$e->getMessage());
             throw $e;
         }
     }
@@ -343,8 +348,8 @@ class RestockController extends Controller
         $rules = [];
         foreach ($assignedAttributes as $assignedAttribute) {
             $field = $assignedAttribute->dynamicField;
-            $key = 'attribute_values.' . $assignedAttribute->product_dynamic_field_id;
-            $rules[$key] = ($field->is_required ? 'required' : 'nullable') . '|string|max:255';
+            $key = 'attribute_values.'.$assignedAttribute->product_dynamic_field_id;
+            $rules[$key] = ($field->is_required ? 'required' : 'nullable').'|string|max:255';
         }
 
         Validator::make(['attribute_values' => $submittedAttributes], $rules)->validate();
@@ -357,9 +362,9 @@ class RestockController extends Controller
 
                 if ($submitted !== '' && $field->input_type === 'select') {
                     $options = collect($field->options ?? [])->map(fn ($item) => (string) $item);
-                    if ($options->isNotEmpty() && !$options->contains($submitted)) {
+                    if ($options->isNotEmpty() && ! $options->contains($submitted)) {
                         throw ValidationException::withMessages([
-                            'attribute_values.' . $fieldId => __('validation.in', ['attribute' => $field->label]),
+                            'attribute_values.'.$fieldId => __('validation.in', ['attribute' => $field->label]),
                         ]);
                     }
                 }

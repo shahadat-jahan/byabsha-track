@@ -3,8 +3,8 @@
 namespace Modules\Capital\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\PlanService;
 use Modules\Capital\Services\CapitalService;
-use Illuminate\Http\Request;
 
 class CapitalController extends Controller
 {
@@ -18,8 +18,8 @@ class CapitalController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'capitals')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'capitals')) {
             return redirect()->route('dashboard.index')->with('error', 'Capitals are not available on your current plan. Please upgrade to access this feature.');
         }
         $shopIds = $user->accessibleShopIds();
@@ -46,6 +46,6 @@ class CapitalController extends Controller
         $totalCapital = $this->capitalService->updateShopCapital($shopId);
 
         return redirect()->route('capital.index')
-            ->with('success', "Shop capital updated successfully! New capital: " . currency_symbol() . number_format($totalCapital, 2));
+            ->with('success', 'Shop capital updated successfully! New capital: '.currency_symbol().number_format($totalCapital, 2));
     }
 }

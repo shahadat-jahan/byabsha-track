@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductBatch;
+use Modules\Sale\Models\SaleBatchItem;
 use Modules\Shop\Models\Shop;
 
 class Restock extends TenantModel
@@ -51,7 +52,7 @@ class Restock extends TenantModel
 
     public function saleBatchItems()
     {
-        return $this->hasMany(\Modules\Sale\Models\SaleBatchItem::class);
+        return $this->hasMany(SaleBatchItem::class);
     }
 
     /**

@@ -4,8 +4,8 @@ namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Settings\Models\Setting;
 use Illuminate\Support\Facades\Storage;
+use Modules\Settings\Models\Setting;
 
 class SettingsController extends Controller
 {
@@ -86,7 +86,7 @@ class SettingsController extends Controller
                                 Storage::disk('public')->delete($oldRelativePath);
                             }
                         }
-                        $setting->update(['value' => '/storage/' . $path]);
+                        $setting->update(['value' => '/storage/'.$path]);
                     }
                 }
             }
@@ -104,13 +104,13 @@ class SettingsController extends Controller
             // Clear cache after updating
             Setting::clearCache();
 
-            return redirect()->route('settings.' . $activeGroup)
+            return redirect()->route('settings.'.$activeGroup)
                 ->with('success', __('settings.updated'));
 
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => __('settings.update_failed') . ' ' . $e->getMessage()]);
+                ->withErrors(['error' => __('settings.update_failed').' '.$e->getMessage()]);
         }
     }
 
@@ -124,7 +124,7 @@ class SettingsController extends Controller
         try {
             Setting::clearCache();
 
-            return redirect()->route('settings.' . $activeGroup)
+            return redirect()->route('settings.'.$activeGroup)
                 ->with('success', __('settings.cache_cleared'));
 
         } catch (\Exception $e) {

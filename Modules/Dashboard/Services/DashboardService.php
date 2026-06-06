@@ -3,12 +3,12 @@
 namespace Modules\Dashboard\Services;
 
 use App\Models\User;
-use Modules\Shop\Models\Shop;
-use Modules\Product\Models\Product;
-use Modules\Sale\Models\Sale;
 use Modules\Capital\Models\Capital;
 use Modules\Capital\Services\CapitalService;
-use Illuminate\Support\Facades\DB;
+use Modules\Product\Models\Product;
+use Modules\Sale\Models\Sale;
+use Modules\Settings\Models\Setting;
+use Modules\Shop\Models\Shop;
 
 class DashboardService
 {
@@ -63,7 +63,7 @@ class DashboardService
     {
         $capital = Capital::where('shop_id', $shopId)->first();
 
-        if (!$capital) {
+        if (! $capital) {
             $this->capitalService->updateShopCapital($shopId);
             $capital = Capital::where('shop_id', $shopId)->first();
         }
@@ -81,7 +81,7 @@ class DashboardService
             'total_sales_today' => Sale::whereIn('shop_id', $shopIds)->whereDate('sale_date', today())->count(),
             'total_revenue_today' => Sale::whereIn('shop_id', $shopIds)->whereDate('sale_date', today())->sum('total_amount'),
             'total_profit_today' => Sale::whereIn('shop_id', $shopIds)->whereDate('sale_date', today())->sum('profit'),
-            'low_stock_count' => Product::whereIn('shop_id', $shopIds)->where('stock_quantity', '<=', (int) \Modules\Settings\Models\Setting::get('low_stock_alert', 5))->count(),
+            'low_stock_count' => Product::whereIn('shop_id', $shopIds)->where('stock_quantity', '<=', (int) Setting::get('low_stock_alert', 5))->count(),
         ];
     }
 }

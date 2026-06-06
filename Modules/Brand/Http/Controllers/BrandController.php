@@ -3,12 +3,12 @@
 namespace Modules\Brand\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Modules\Brand\Models\Brand;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-
+use Illuminate\Validation\Rule;
+use Modules\Brand\Models\Brand;
 use Yajra\DataTables\Facades\DataTables;
 
 class BrandController extends Controller implements HasMiddleware
@@ -18,9 +18,10 @@ class BrandController extends Controller implements HasMiddleware
         return [
             new Middleware(function ($request, $next) {
                 $user = auth()->user();
-                if ($user && !$user->isOwner() && !$user->isSuperAdmin()) {
+                if ($user && ! $user->isOwner() && ! $user->isSuperAdmin()) {
                     abort(403, 'Unauthorized action. Only shop owners and admins can manage brands.');
                 }
+
                 return $next($request);
             }),
         ];
@@ -39,10 +40,11 @@ class BrandController extends Controller implements HasMiddleware
                 ->addColumn('owner_info', function (Brand $brand) {
                     $name = e($brand->owner?->name ?? 'System');
                     $email = e($brand->owner?->email ?? 'N/A');
-                    return '<strong>' . $name . '</strong><br><small class="text-muted">' . $email . '</small>';
+
+                    return '<strong>'.$name.'</strong><br><small class="text-muted">'.$email.'</small>';
                 })
                 ->addColumn('products_badge', function (Brand $brand) {
-                    return '<span class="product-count-pill">' . $brand->products_count . '</span>';
+                    return '<span class="product-count-pill">'.$brand->products_count.'</span>';
                 })
                 ->addColumn('actions', function (Brand $brand) {
                     $viewUrl = route('brand.show', $brand->id);
@@ -50,20 +52,20 @@ class BrandController extends Controller implements HasMiddleware
                     $deleteUrl = route('brand.destroy', $brand->id);
 
                     return '<div class="d-flex gap-1 justify-content-end">'
-                        . '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-primary" title="View">'
-                            . '<i class="bi bi-eye"></i>'
-                        . '</a>'
-                        . '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-warning" title="Edit">'
-                            . '<i class="bi bi-pencil"></i>'
-                        . '</a>'
-                        . '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'' . __('brand::brand.confirm_delete') . '\')">'
-                            . csrf_field()
-                            . method_field('DELETE')
-                            . '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">'
-                                . '<i class="bi bi-trash"></i>'
-                            . '</button>'
-                        . '</form>'
-                        . '</div>';
+                        .'<a href="'.$viewUrl.'" class="btn btn-sm btn-outline-primary" title="View">'
+                            .'<i class="bi bi-eye"></i>'
+                        .'</a>'
+                        .'<a href="'.$editUrl.'" class="btn btn-sm btn-outline-warning" title="Edit">'
+                            .'<i class="bi bi-pencil"></i>'
+                        .'</a>'
+                        .'<form action="'.$deleteUrl.'" method="POST" class="d-inline" onsubmit="return confirm(\''.__('brand::brand.confirm_delete').'\')">'
+                            .csrf_field()
+                            .method_field('DELETE')
+                            .'<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">'
+                                .'<i class="bi bi-trash"></i>'
+                            .'</button>'
+                        .'</form>'
+                        .'</div>';
                 })
                 ->rawColumns(['owner_info', 'products_badge', 'actions'])
                 ->toJson();
@@ -77,8 +79,8 @@ class BrandController extends Controller implements HasMiddleware
     public function create()
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'brands')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'brands')) {
             return redirect()->route('brand.index')->with('error', 'Your plan limit for brands has been reached. Please upgrade to add more brands.');
         }
 
@@ -100,8 +102,8 @@ class BrandController extends Controller implements HasMiddleware
 
         $validated['user_id'] = $user->id;
 
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'brands')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'brands')) {
             return redirect()->route('brand.index')->with('error', 'Your plan limit for brands has been reached. Please upgrade to add more brands.');
         }
 

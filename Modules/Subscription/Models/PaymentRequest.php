@@ -2,10 +2,10 @@
 
 namespace Modules\Subscription\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Branch\Models\Branch;
+use Modules\Shop\Models\Shop;
 
 class PaymentRequest extends Model
 {

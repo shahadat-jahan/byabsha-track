@@ -3,11 +3,12 @@
 namespace Modules\Dashboard\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Dashboard\Services\DashboardService;
-use Modules\Capital\Models\Capital;
-use Modules\Sale\Models\Sale;
-
+use App\Services\ShopContext;
 use Illuminate\Http\Request;
+use Modules\Capital\Models\Capital;
+use Modules\Dashboard\Services\DashboardService;
+use Modules\Sale\Models\Sale;
+use Modules\Shop\Models\Shop;
 
 class DashboardController extends Controller
 {
@@ -29,11 +30,11 @@ class DashboardController extends Controller
         $isBasicPlan = $user->isBasicPlan();
         $currentPlan = $user->getCurrentPlanKey();
 
-        $userShops = $user->isSuperAdmin() 
-            ? \Modules\Shop\Models\Shop::orderBy('name')->get()
+        $userShops = $user->isSuperAdmin()
+            ? Shop::orderBy('name')->get()
             : $user->shops()->orderBy('name')->get();
 
-        $activeShopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $activeShopId = app(ShopContext::class)->getActiveShopId();
 
         return view('dashboard::index', compact('shopMetrics', 'overallMetrics', 'isBasicPlan', 'currentPlan', 'userShops', 'activeShopId'));
     }
@@ -44,7 +45,7 @@ class DashboardController extends Controller
     public function selectShop(Request $request)
     {
         $request->validate([
-            'shop_id' => 'required|integer|exists:shops,id'
+            'shop_id' => 'required|integer|exists:shops,id',
         ]);
 
         $user = auth()->user();
@@ -52,6 +53,7 @@ class DashboardController extends Controller
 
         if ($user->isSuperAdmin() || $user->ownsShop($shopId)) {
             session(['current_shop_id' => $shopId]);
+
             return back()->with('success', 'Active shop context switched.');
         }
 
@@ -66,7 +68,7 @@ class DashboardController extends Controller
         $user = auth()->user();
         abort_unless($user->ownsShop((int) $shopId), 403, 'You do not have access to this shop.');
 
-        $shop = \Modules\Shop\Models\Shop::with(['products', 'sales'])->findOrFail($shopId);
+        $shop = Shop::with(['products', 'sales'])->findOrFail($shopId);
         $capital = Capital::where('shop_id', $shopId)->first();
         $todaySales = Sale::where('shop_id', $shopId)
             ->whereDate('sale_date', today())
@@ -78,6 +80,7 @@ class DashboardController extends Controller
             ->whereYear('sale_date', now()->year)
             ->whereMonth('sale_date', now()->month)
             ->sum('profit');
+
         return view('dashboard::partials.shop-details', [
             'shop' => $shop,
             'capital' => $capital,

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('product_batches', function (Blueprint $table) {
-            if (!Schema::hasColumn('product_batches', 'attribute_values')) {
+            if (! Schema::hasColumn('product_batches', 'attribute_values')) {
                 $table->json('attribute_values')->nullable()->after('source_id');
             }
         });

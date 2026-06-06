@@ -12,7 +12,7 @@ return new class extends Migration
             // Weighted-average purchase cost per unit for the goods sold in this sale.
             // Populated by the FIFO deduction logic; NULL for sales recorded before this
             // feature was introduced.
-            if (!Schema::hasColumn('sales', 'purchase_price_per_unit')) {
+            if (! Schema::hasColumn('sales', 'purchase_price_per_unit')) {
                 $table->decimal('purchase_price_per_unit', 12, 2)->nullable()->after('sale_price');
             }
         });

@@ -9,21 +9,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sale_warranties', function (Blueprint $table) {
-            if (!Schema::hasColumn('sale_warranties', 'source_type')) {
+            if (! Schema::hasColumn('sale_warranties', 'source_type')) {
                 $table->enum('source_type', ['manual', 'auto_free_service'])
                     ->default('manual')
                     ->after('warranty_code');
             }
 
-            if (!Schema::hasColumn('sale_warranties', 'duration_snapshot_value')) {
+            if (! Schema::hasColumn('sale_warranties', 'duration_snapshot_value')) {
                 $table->unsignedInteger('duration_snapshot_value')->nullable()->after('source_type');
             }
 
-            if (!Schema::hasColumn('sale_warranties', 'duration_snapshot_unit')) {
+            if (! Schema::hasColumn('sale_warranties', 'duration_snapshot_unit')) {
                 $table->enum('duration_snapshot_unit', ['day', 'month', 'year'])->nullable()->after('duration_snapshot_value');
             }
 
-            if (!Schema::hasColumn('sale_warranties', 'coverage_quantity')) {
+            if (! Schema::hasColumn('sale_warranties', 'coverage_quantity')) {
                 $table->unsignedInteger('coverage_quantity')->default(1)->after('duration_snapshot_unit');
             }
         });
@@ -50,7 +50,7 @@ return new class extends Migration
                 $columns[] = 'source_type';
             }
 
-            if (!empty($columns)) {
+            if (! empty($columns)) {
                 $table->dropColumn($columns);
             }
         });

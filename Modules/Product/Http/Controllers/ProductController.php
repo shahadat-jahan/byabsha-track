@@ -3,22 +3,27 @@
 namespace Modules\Product\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Product\Models\Product;
-use Modules\Category\Models\Category;
-use Modules\Brand\Models\Brand;
-use Modules\Shop\Models\Shop;
-use Modules\Capital\Services\CapitalService;
-use Modules\Product\Models\ProductDynamicField;
-use Modules\Product\Models\ProductDynamicValue;
-use Modules\Product\Services\ProductBatchService;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use Modules\Brand\Models\Brand;
+use Modules\Capital\Services\CapitalService;
+use Modules\Category\Models\Category;
+use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductDynamicField;
+use Modules\Product\Models\ProductDynamicValue;
+use Modules\Product\Services\ProductBatchService;
+use Modules\Restock\Models\Restock;
+use Modules\Sale\Models\Sale;
+use Modules\Settings\Models\Setting;
+use Modules\Shop\Models\Shop;
 
 class ProductController extends Controller
 {
     protected $capitalService;
+
     protected ProductBatchService $productBatchService;
 
     public function __construct(CapitalService $capitalService, ProductBatchService $productBatchService)
@@ -26,6 +31,7 @@ class ProductController extends Controller
         $this->capitalService = $capitalService;
         $this->productBatchService = $productBatchService;
     }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -38,7 +44,7 @@ class ProductController extends Controller
         $selectedShopId = $request->filled('shop_id') ? $request->integer('shop_id') : null;
 
         // Prevent accessing a shop the user doesn't own
-        if ($selectedShopId && !in_array($selectedShopId, $allowedShopIds)) {
+        if ($selectedShopId && ! in_array($selectedShopId, $allowedShopIds)) {
             abort(403, 'You do not have access to this shop.');
         }
 
@@ -77,8 +83,8 @@ class ProductController extends Controller
 
                         $query->where(function ($q) use ($searchTerm, $supportsModelName, $modelNumberFieldIds) {
                             $q->where('products.name', 'like', "%{$searchTerm}%")
-                              ->orWhere('products.brand', 'like', "%{$searchTerm}%")
-                              ->orWhere('products.category', 'like', "%{$searchTerm}%");
+                                ->orWhere('products.brand', 'like', "%{$searchTerm}%")
+                                ->orWhere('products.category', 'like', "%{$searchTerm}%");
 
                             if ($supportsModelName) {
                                 $q->orWhere('products.model_name', 'like', "%{$searchTerm}%");
@@ -103,16 +109,16 @@ class ProductController extends Controller
                     return $product->creator?->name ?? '-';
                 })
                 ->editColumn('purchase_price', function ($product) {
-                    return currency_symbol() . number_format($product->purchase_price, 2);
+                    return currency_symbol().number_format($product->purchase_price, 2);
                 })
                 ->editColumn('stock_quantity', function ($product) {
-                    $lowStockAlert = (int) \Modules\Settings\Models\Setting::get('low_stock_alert', 5);
+                    $lowStockAlert = (int) Setting::get('low_stock_alert', 5);
                     if ($product->stock_quantity <= $lowStockAlert) {
-                        return '<span class="stock-badge stock-low">' . $product->stock_quantity . '</span>';
+                        return '<span class="stock-badge stock-low">'.$product->stock_quantity.'</span>';
                     } elseif ($product->stock_quantity <= ($lowStockAlert * 4)) {
-                        return '<span class="stock-badge stock-mid">' . $product->stock_quantity . '</span>';
+                        return '<span class="stock-badge stock-mid">'.$product->stock_quantity.'</span>';
                     } else {
-                        return '<span class="stock-badge stock-high">' . $product->stock_quantity . '</span>';
+                        return '<span class="stock-badge stock-high">'.$product->stock_quantity.'</span>';
                     }
                 })
                 ->addColumn('actions', function ($product) {
@@ -120,7 +126,7 @@ class ProductController extends Controller
                     $showRoute = route('product.show', $product->id);
                     $editRoute = route('product.edit', $product->id);
                     $destroyRoute = route('product.destroy', $product->id);
-                    $confirmMessage = __("product.confirm_delete");
+                    $confirmMessage = __('product.confirm_delete');
                     $csrf = csrf_field();
                     $method = method_field('DELETE');
 
@@ -153,7 +159,7 @@ class ProductController extends Controller
         $searchTerm = trim((string) $request->input('search', ''));
         $selectedShop = $selectedShopId ? $shops->firstWhere('id', $selectedShopId) : null;
 
-        if ($selectedShopId && !$selectedShop) {
+        if ($selectedShopId && ! $selectedShop) {
             $selectedShopId = null;
         }
 
@@ -244,8 +250,8 @@ class ProductController extends Controller
     public function create(Request $request)
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'products')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'products')) {
             return redirect()->route('product.index')->with('error', 'Your plan limit for products has been reached. Please upgrade to add more products.');
         }
         $shops = Shop::forUser($user)->get();
@@ -270,8 +276,8 @@ class ProductController extends Controller
         $user = auth()->user();
         abort_unless($user->ownsShop((int) $request->input('shop_id')), 403, 'You do not have access to this shop.');
 
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->canCreate($user, 'products')) {
+        $planService = app(PlanService::class);
+        if (! $planService->canCreate($user, 'products')) {
             return back()->withInput()->withErrors(['error' => 'Your plan limit for products has been reached. Please upgrade to add more products.']);
         }
 
@@ -296,7 +302,7 @@ class ProductController extends Controller
         ]);
 
         $validated['has_free_service'] = $request->boolean('has_free_service');
-        if (!$validated['has_free_service']) {
+        if (! $validated['has_free_service']) {
             $validated['free_service_duration_value'] = null;
             $validated['free_service_duration_unit'] = null;
             $validated['free_service_terms'] = null;
@@ -350,6 +356,7 @@ class ProductController extends Controller
             },
         ])->findOrFail($id);
         abort_unless(auth()->user()->ownsShop((int) $product->shop_id), 403, 'You do not have access to this shop.');
+
         return view('product::show', compact('product'));
     }
 
@@ -358,14 +365,14 @@ class ProductController extends Controller
         $product = Product::with(['shop', 'productCategory'])->findOrFail($id);
         abort_unless(auth()->user()->ownsShop((int) $product->shop_id), 403, 'You do not have access to this shop.');
 
-        $batches = \Modules\Restock\Models\Restock::where('product_id', $product->id)
+        $batches = Restock::where('product_id', $product->id)
             ->where('shop_id', $product->shop_id)
             ->withTrashed()
             ->orderBy('restock_date', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 
-        $sales = \Modules\Sale\Models\Sale::with(['batchItems.restock'])
+        $sales = Sale::with(['batchItems.restock'])
             ->where('product_id', $product->id)
             ->where('shop_id', $product->shop_id)
             ->withTrashed()
@@ -373,9 +380,9 @@ class ProductController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        $totalSold       = $sales->whereNull('deleted_at')->sum('quantity');
-        $totalRevenue    = $sales->whereNull('deleted_at')->sum('total_amount');
-        $totalProfit     = $sales->whereNull('deleted_at')->sum('profit');
+        $totalSold = $sales->whereNull('deleted_at')->sum('quantity');
+        $totalRevenue = $sales->whereNull('deleted_at')->sum('total_amount');
+        $totalProfit = $sales->whereNull('deleted_at')->sum('profit');
 
         return view('product::batches', compact(
             'product',
@@ -439,7 +446,7 @@ class ProductController extends Controller
         ]);
 
         $validated['has_free_service'] = $request->boolean('has_free_service');
-        if (!$validated['has_free_service']) {
+        if (! $validated['has_free_service']) {
             $validated['free_service_duration_value'] = null;
             $validated['free_service_duration_unit'] = null;
             $validated['free_service_terms'] = null;
@@ -554,6 +561,7 @@ class ProductController extends Controller
 
             if ($field->is_required && $isEmpty) {
                 $errors["custom_fields.{$field->id}"] = __('validation.required', ['attribute' => $field->label]);
+
                 continue;
             }
 
@@ -563,8 +571,9 @@ class ProductController extends Controller
 
             switch ($field->input_type) {
                 case 'number':
-                    if (!is_numeric($value)) {
+                    if (! is_numeric($value)) {
                         $errors["custom_fields.{$field->id}"] = __('validation.numeric', ['attribute' => $field->label]);
+
                         continue 2;
                     }
                     break;
@@ -572,14 +581,16 @@ class ProductController extends Controller
                 case 'date':
                     if (strtotime((string) $value) === false) {
                         $errors["custom_fields.{$field->id}"] = __('validation.date', ['attribute' => $field->label]);
+
                         continue 2;
                     }
                     break;
 
                 case 'select':
                     $options = $field->options ?? [];
-                    if (!in_array((string) $value, $options, true)) {
+                    if (! in_array((string) $value, $options, true)) {
                         $errors["custom_fields.{$field->id}"] = __('validation.in', ['attribute' => $field->label]);
+
                         continue 2;
                     }
                     break;
@@ -591,7 +602,7 @@ class ProductController extends Controller
             $validated[$field->id] = (string) $value;
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
 
@@ -619,7 +630,7 @@ class ProductController extends Controller
             ->values()
             ->all();
 
-        if (!empty($rows)) {
+        if (! empty($rows)) {
             $product->dynamicValues()->insert($rows);
         }
     }

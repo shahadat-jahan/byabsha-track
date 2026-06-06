@@ -3,6 +3,7 @@
 namespace Modules\Sale\Models;
 
 use App\Models\TenantModel;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Modules\Product\Models\ProductBatch;
 use Modules\Shop\Models\Shop;
@@ -54,6 +55,6 @@ class SaleExchange extends TenantModel
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by')->withTrashed();
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 }

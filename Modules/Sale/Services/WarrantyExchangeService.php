@@ -17,8 +17,7 @@ class WarrantyExchangeService
     public function __construct(
         protected ProductBatchService $productBatchService,
         protected CapitalService $capitalService,
-    ) {
-    }
+    ) {}
 
     public function getWarranties(array $filters = [], int $perPage = 20)
     {
@@ -28,15 +27,15 @@ class WarrantyExchangeService
             'creator' => fn ($q) => $q->withTrashed(),
         ])->latest('id');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', (int) $filters['shop_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             if ($filters['status'] === 'expired') {
                 $query->where('status', 'active')->whereDate('end_date', '<', now()->toDateString());
             } else {
@@ -108,7 +107,7 @@ class WarrantyExchangeService
         $sale->loadMissing('product');
         $product = $sale->product;
 
-        if (!$product || !(bool) $product->has_free_service) {
+        if (! $product || ! (bool) $product->has_free_service) {
             SaleWarranty::query()
                 ->where('sale_id', (int) $sale->id)
                 ->where('source_type', 'auto_free_service')
@@ -119,7 +118,7 @@ class WarrantyExchangeService
 
         $durationValue = (int) ($product->free_service_duration_value ?? 0);
         $durationUnit = (string) ($product->free_service_duration_unit ?? '');
-        if ($durationValue <= 0 || !in_array($durationUnit, ['day', 'month', 'year'], true)) {
+        if ($durationValue <= 0 || ! in_array($durationUnit, ['day', 'month', 'year'], true)) {
             return null;
         }
 
@@ -131,8 +130,8 @@ class WarrantyExchangeService
             ->where('source_type', 'auto_free_service')
             ->first();
 
-        if (!$warranty) {
-            $warranty = new SaleWarranty();
+        if (! $warranty) {
+            $warranty = new SaleWarranty;
             $warranty->sale_id = (int) $sale->id;
             $warranty->shop_id = (int) $sale->shop_id;
             $warranty->warranty_code = 'TMP';
@@ -190,15 +189,15 @@ class WarrantyExchangeService
             'creator' => fn ($q) => $q->withTrashed(),
         ])->latest('exchange_date')->latest('id');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', (int) $filters['shop_id']);
         }
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->where('exchange_type', $filters['type']);
         }
 
@@ -216,7 +215,7 @@ class WarrantyExchangeService
                 ]);
             }
 
-            if (!$sale->product_batch_id) {
+            if (! $sale->product_batch_id) {
                 throw ValidationException::withMessages([
                     'sale_id' => 'Selected sale has no batch mapping. Exchange cannot be tracked safely.',
                 ]);
@@ -231,12 +230,12 @@ class WarrantyExchangeService
             $remainingExchangeable = (int) $sale->quantity - $alreadyExchanged;
             if ($remainingExchangeable <= 0 || $quantity > $remainingExchangeable) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Exchange quantity exceeds remaining exchangeable amount. Remaining: ' . max($remainingExchangeable, 0),
+                    'quantity' => 'Exchange quantity exceeds remaining exchangeable amount. Remaining: '.max($remainingExchangeable, 0),
                 ]);
             }
 
             $originalBatch = ProductBatch::withTrashed()->lockForUpdate()->find($sale->product_batch_id);
-            if (!$originalBatch) {
+            if (! $originalBatch) {
                 throw ValidationException::withMessages([
                     'sale_id' => 'Original batch not found for this sale.',
                 ]);
@@ -258,7 +257,7 @@ class WarrantyExchangeService
                     ->lockForUpdate()
                     ->first();
 
-                if (!$replacementBatch) {
+                if (! $replacementBatch) {
                     throw ValidationException::withMessages([
                         'replacement_batch_id' => 'Replacement batch does not belong to selected shop.',
                     ]);
@@ -266,7 +265,7 @@ class WarrantyExchangeService
 
                 if ((int) $replacementBatch->remaining_quantity < $quantity) {
                     throw ValidationException::withMessages([
-                        'replacement_batch_id' => 'Insufficient replacement batch stock. Available: ' . $replacementBatch->remaining_quantity,
+                        'replacement_batch_id' => 'Insufficient replacement batch stock. Available: '.$replacementBatch->remaining_quantity,
                     ]);
                 }
             }
@@ -314,6 +313,6 @@ class WarrantyExchangeService
     {
         $date = date('Ymd', strtotime($startDate));
 
-        return 'WAR-' . $date . '-' . str_pad((string) $id, 5, '0', STR_PAD_LEFT);
+        return 'WAR-'.$date.'-'.str_pad((string) $id, 5, '0', STR_PAD_LEFT);
     }
 }

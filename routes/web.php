@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\NotificationController;
+use Illuminate\Support\Facades\Route;
 
 // Language switcher
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])
@@ -20,4 +20,3 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->gr
 });
 
 // Root handled by Landing module
-

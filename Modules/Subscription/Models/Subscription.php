@@ -2,10 +2,10 @@
 
 namespace Modules\Subscription\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Branch\Models\Branch;
+use Modules\Shop\Models\Shop;
 
 class Subscription extends Model
 {
@@ -16,7 +16,7 @@ class Subscription extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
-        'ends_at'   => 'datetime',
+        'ends_at' => 'datetime',
     ];
 
     public function user()

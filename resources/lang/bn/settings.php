@@ -70,7 +70,7 @@ return [
     'support_phone_help' => 'গ্রাহক সহায়তার জন্য ফোন নম্বর',
     'company_address' => 'কোম্পানির ঠিকানা',
     'company_address_help' => 'আপনার কোম্পানির মূল কার্যালয়ের ঠিকানা',
-    
+
     // Social Links
     'social_facebook' => 'ফেসবুক লিংক',
     'social_facebook_help' => 'আপনার কোম্পানির ফেসবুক পেজের ঠিকানা',

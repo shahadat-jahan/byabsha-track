@@ -7,7 +7,7 @@ uses(RefreshDatabase::class);
 
 test('superadmin can view users table with yajra datatable structure', function () {
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Super Admin User']);
-    
+
     // Create some fake users
     User::factory()->create(['name' => 'John Doe Manager', 'email' => 'john@manager.local', 'role' => 'manager']);
     User::factory()->create(['name' => 'Jane Owner', 'email' => 'jane@owner.local', 'role' => 'owner']);
@@ -22,7 +22,7 @@ test('superadmin can view users table with yajra datatable structure', function 
         'recordsFiltered',
         'data',
     ]);
-    
+
     $response->assertSee('John Doe Manager');
     $response->assertSee('Jane Owner');
     $response->assertSee('jane@owner.local');
@@ -39,10 +39,10 @@ test('non-superadmin users cannot view users table', function () {
 
 test('superadmin can search and filter users table by role and status', function () {
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Super Admin User']);
-    
+
     $manager = User::factory()->create(['name' => 'Bob Manager', 'email' => 'bob@manager.local', 'role' => 'manager']);
     $owner = User::factory()->create(['name' => 'Alice Owner', 'email' => 'alice@owner.local', 'role' => 'owner']);
-    
+
     // Deactivated user
     $deactivated = User::factory()->create(['name' => 'Charlie Expelled', 'email' => 'charlie@deactive.local', 'role' => 'manager']);
     $deactivated->delete(); // Soft delete

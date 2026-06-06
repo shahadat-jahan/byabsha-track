@@ -2,14 +2,17 @@
 
 namespace Modules\Shop\Models;
 
-use App\Models\User;
 use App\Models\TenantModel;
-use Modules\Branch\Models\Branch;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Branch\Models\Branch;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductBatch;
 use Modules\Sale\Models\Sale;
+use Modules\Subscription\Models\Subscription;
+use Modules\Subscription\Models\SubscriptionPlan;
 
 class Shop extends TenantModel
 {
@@ -47,7 +50,7 @@ class Shop extends TenantModel
 
     public function batches()
     {
-        return $this->hasMany(\Modules\Product\Models\ProductBatch::class);
+        return $this->hasMany(ProductBatch::class);
     }
 
     public function sales()
@@ -62,12 +65,12 @@ class Shop extends TenantModel
 
     public function subscriptions()
     {
-        return $this->hasMany(\Modules\Subscription\Models\Subscription::class);
+        return $this->hasMany(Subscription::class);
     }
 
     public function activeSubscription()
     {
-        return $this->hasOne(\Modules\Subscription\Models\Subscription::class)
+        return $this->hasOne(Subscription::class)
             ->where('status', 'active')
             ->where(function ($q) {
                 $q->whereNull('ends_at')->orWhere('ends_at', '>', now()->subDays(3));
@@ -84,7 +87,7 @@ class Shop extends TenantModel
         }
 
         $subscription = $this->activeSubscription;
-        $plan = $subscription?->plan ?? \Modules\Subscription\Models\SubscriptionPlan::freePlan();
+        $plan = $subscription?->plan ?? SubscriptionPlan::freePlan();
 
         return $plan->hasModule($featureKey);
     }

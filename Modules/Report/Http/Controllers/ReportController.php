@@ -3,10 +3,13 @@
 namespace Modules\Report\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Report\Services\ReportService;
+use App\Models\User;
+use App\Services\PlanService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Modules\Report\Services\ReportService;
 
 class ReportController extends Controller
 {
@@ -21,16 +24,16 @@ class ReportController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $shopIds = $user->accessibleShopIds();
 
         $shopId = $request->input('shop_id');
-        if ($shopId && !$user->ownsShop((int) $shopId)) {
+        if ($shopId && ! $user->ownsShop((int) $shopId)) {
             abort(403, 'You do not have access to this shop.');
         }
 
         return array_merge([
-            'shop_id'  => $shopId,
+            'shop_id' => $shopId,
             'shop_ids' => $shopIds,
         ], $extra);
     }
@@ -48,7 +51,7 @@ class ReportController extends Controller
         $dailySales = $this->reportService->getDailySales($filters);
         $dailyDates = collect($dailySales)
             ->pluck('date')
-            ->map(fn ($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'))
             ->all();
         $dailySalesDetails = $this->reportService->getSalesDetailsForDates($filters, $dailyDates);
         $monthlyOverview = $this->reportService->getDailyProfitLoss([
@@ -77,7 +80,7 @@ class ReportController extends Controller
     {
         $filters = $this->authorizedFilters($request, [
             'start_date' => $request->input('start_date', now()->subDays(6)->format('Y-m-d')),
-            'end_date'   => $request->input('end_date', now()->format('Y-m-d')),
+            'end_date' => $request->input('end_date', now()->format('Y-m-d')),
         ]);
 
         $salesSummary = $this->reportService->getSalesSummary($filters);
@@ -85,18 +88,18 @@ class ReportController extends Controller
         $dailySales = $this->reportService->getDailySales($filters);
         $dailyDates = collect($dailySales)
             ->pluck('date')
-            ->map(fn ($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'))
             ->all();
         $dailySalesDetails = $this->reportService->getSalesDetailsForDates($filters, $dailyDates);
         $monthlyOverview = $this->reportService->getDailyProfitLoss([
-            'shop_id'  => $filters['shop_id'],
+            'shop_id' => $filters['shop_id'],
             'shop_ids' => $filters['shop_ids'],
-            'month'    => now()->format('Y-m'),
+            'month' => now()->format('Y-m'),
         ]);
         $yearlyOverview = $this->reportService->getMonthlyProfitLoss([
-            'shop_id'  => $filters['shop_id'],
+            'shop_id' => $filters['shop_id'],
             'shop_ids' => $filters['shop_ids'],
-            'year'     => now()->format('Y'),
+            'year' => now()->format('Y'),
         ]);
         $shops = $this->reportService->getShops($filters['shop_ids']);
         $shopName = $filters['shop_id']
@@ -120,7 +123,7 @@ class ReportController extends Controller
     {
         $filters = $this->authorizedFilters($request, [
             'start_date' => $request->input('start_date', now()->startOfMonth()->format('Y-m-d')),
-            'end_date'   => $request->input('end_date', now()->format('Y-m-d')),
+            'end_date' => $request->input('end_date', now()->format('Y-m-d')),
         ]);
 
         $sales = $this->reportService->getPaginatedSales($filters);
@@ -145,7 +148,7 @@ class ReportController extends Controller
     {
         $filters = $this->authorizedFilters($request, [
             'start_date' => $request->input('start_date', now()->startOfMonth()->format('Y-m-d')),
-            'end_date'   => $request->input('end_date', now()->format('Y-m-d')),
+            'end_date' => $request->input('end_date', now()->format('Y-m-d')),
         ]);
 
         $shopData = $this->reportService->getShopComparison($filters);
@@ -157,8 +160,8 @@ class ReportController extends Controller
     public function daily(Request $request)
     {
         $user = Auth::user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'daily_pl')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'daily_pl')) {
             return redirect()->route('report.index')->with('error', 'Daily P&L is not available on your current plan. Please upgrade to access this feature.');
         }
         $filters = $this->authorizedFilters($request, [
@@ -166,7 +169,7 @@ class ReportController extends Controller
         ]);
 
         $dailyData = $this->reportService->getDailyProfitLoss($filters);
-        $startDate = $filters['month'] . '-01';
+        $startDate = $filters['month'].'-01';
         $endDate = date('Y-m-t', strtotime($startDate));
         $dailyDetailsByDate = $this->reportService
             ->getSalesDetailsByDateRange($filters, $startDate, $endDate)
@@ -179,8 +182,8 @@ class ReportController extends Controller
     public function monthly(Request $request)
     {
         $user = Auth::user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'monthly_pl')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'monthly_pl')) {
             return redirect()->route('report.index')->with('error', 'Monthly P&L is not available on your current plan. Please upgrade to access this feature.');
         }
         $filters = $this->authorizedFilters($request, [
@@ -188,8 +191,8 @@ class ReportController extends Controller
         ]);
 
         $monthlyData = $this->reportService->getMonthlyProfitLoss($filters);
-        $startDate = $filters['year'] . '-01-01';
-        $endDate = $filters['year'] . '-12-31';
+        $startDate = $filters['year'].'-01-01';
+        $endDate = $filters['year'].'-12-31';
         $monthlyDetailsByMonth = $this->reportService
             ->getSalesDetailsByDateRange($filters, $startDate, $endDate)
             ->groupBy(fn ($sale) => $sale->sale_date->format('n'));
@@ -213,7 +216,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('report::pdf.daily-pdf', compact('dailyData', 'shops', 'filters', 'shopName'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'daily-report-' . $filters['month'] . '.pdf';
+        $filename = 'daily-report-'.$filters['month'].'.pdf';
 
         return $pdf->download($filename);
     }
@@ -233,7 +236,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('report::pdf.monthly-pdf', compact('monthlyData', 'shops', 'filters', 'shopName'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'monthly-report-' . $filters['year'] . '.pdf';
+        $filename = 'monthly-report-'.$filters['year'].'.pdf';
 
         return $pdf->download($filename);
     }
@@ -242,7 +245,7 @@ class ReportController extends Controller
     {
         $filters = $this->authorizedFilters($request, [
             'start_date' => $request->input('start_date', now()->startOfMonth()->format('Y-m-d')),
-            'end_date'   => $request->input('end_date', now()->format('Y-m-d')),
+            'end_date' => $request->input('end_date', now()->format('Y-m-d')),
         ]);
 
         $sales = $this->reportService->getPaginatedSales($filters, 1000);
@@ -255,7 +258,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('report::pdf.sales-pdf', compact('sales', 'salesSummary', 'shops', 'filters', 'shopName'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'sales-report-' . $filters['start_date'] . '-to-' . $filters['end_date'] . '.pdf';
+        $filename = 'sales-report-'.$filters['start_date'].'-to-'.$filters['end_date'].'.pdf';
 
         return $pdf->download($filename);
     }
@@ -274,7 +277,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('report::pdf.products-pdf', compact('products', 'stockSummary', 'shops', 'filters', 'shopName'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'products-report-' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'products-report-'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }
@@ -283,7 +286,7 @@ class ReportController extends Controller
     {
         $filters = $this->authorizedFilters($request, [
             'start_date' => $request->input('start_date', now()->startOfMonth()->format('Y-m-d')),
-            'end_date'   => $request->input('end_date', now()->format('Y-m-d')),
+            'end_date' => $request->input('end_date', now()->format('Y-m-d')),
         ]);
 
         $shopData = $this->reportService->getShopComparison($filters);
@@ -292,7 +295,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('report::pdf.shops-pdf', compact('shopData', 'shops', 'filters'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'shops-report-' . $filters['start_date'] . '-to-' . $filters['end_date'] . '.pdf';
+        $filename = 'shops-report-'.$filters['start_date'].'-to-'.$filters['end_date'].'.pdf';
 
         return $pdf->download($filename);
     }

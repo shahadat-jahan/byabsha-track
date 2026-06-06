@@ -5,9 +5,9 @@ namespace Modules\Sale\Models;
 use App\Models\TenantModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Shop\Models\Shop;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductBatch;
+use Modules\Shop\Models\Shop;
 
 class Sale extends TenantModel
 {

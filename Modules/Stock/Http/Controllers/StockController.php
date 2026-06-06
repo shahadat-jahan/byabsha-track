@@ -3,9 +3,12 @@
 namespace Modules\Stock\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
 use Modules\Product\Models\Product;
+use Modules\Settings\Models\Setting;
 use Modules\Shop\Models\Shop;
 
 class StockController extends Controller
@@ -13,8 +16,8 @@ class StockController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $planService = app(\App\Services\PlanService::class);
-        if (!$planService->isFeatureEnabled($user, 'stocks')) {
+        $planService = app(PlanService::class);
+        if (! $planService->isFeatureEnabled($user, 'stocks')) {
             return redirect()->route('dashboard.index')->with('error', 'Stocks are not available on your current plan. Please upgrade to access this feature.');
         }
         $allowedShopIds = $user->accessibleShopIds();
@@ -23,13 +26,13 @@ class StockController extends Controller
         $searchTerm = trim((string) $request->input('search', ''));
 
         // Prevent accessing a shop the user doesn't own
-        if ($selectedShopId && !in_array((int) $selectedShopId, $allowedShopIds)) {
+        if ($selectedShopId && ! in_array((int) $selectedShopId, $allowedShopIds)) {
             abort(403, 'You do not have access to this shop.');
         }
 
         if ($request->ajax()) {
             $supportsModelName = Schema::hasColumn('products', 'model_name');
-            $lowStockAlert = (int) \Modules\Settings\Models\Setting::get('low_stock_alert', 5);
+            $lowStockAlert = (int) Setting::get('low_stock_alert', 5);
 
             $query = Product::with(['shop', 'creator:id,name', 'dynamicValues.dynamicField'])
                 ->whereIn('shop_id', $allowedShopIds);
@@ -50,7 +53,8 @@ class StockController extends Controller
                 })
                 ->addColumn('shop_badge', function ($product) {
                     $shopName = $product->shop?->name ?? __('stock::stock.deleted_shop');
-                    return '<span class="custom-shop-badge"><i class="bi bi-shop"></i> ' . e($shopName) . '</span>';
+
+                    return '<span class="custom-shop-badge"><i class="bi bi-shop"></i> '.e($shopName).'</span>';
                 })
                 ->addColumn('creator_name', function ($product) {
                     return $product->creator?->name ?? '-';
@@ -63,11 +67,12 @@ class StockController extends Controller
 
                     $html = '<div class="attribute-badge-list">';
                     foreach ($attributes as $attr) {
-                        $html .= '<span class="custom-attr-badge" title="' . e($attr['label']) . ': ' . e($attr['value']) . '">';
-                        $html .= '<strong>' . e($attr['label']) . ':</strong> ' . e($attr['value']);
+                        $html .= '<span class="custom-attr-badge" title="'.e($attr['label']).': '.e($attr['value']).'">';
+                        $html .= '<strong>'.e($attr['label']).':</strong> '.e($attr['value']);
                         $html .= '</span>';
                     }
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->editColumn('purchase_price', function ($product) {
@@ -78,15 +83,15 @@ class StockController extends Controller
                 })
                 ->editColumn('stock_quantity', function ($product) use ($lowStockAlert) {
                     if ($product->stock_quantity <= 0) {
-                        return '<span class="status-pill status-pill-danger"><span class="status-indicator"></span>' . __('stock::stock.out') . '</span>';
+                        return '<span class="status-pill status-pill-danger"><span class="status-indicator"></span>'.__('stock::stock.out').'</span>';
                     } elseif ($product->stock_quantity <= $lowStockAlert) {
-                        return '<span class="status-pill status-pill-warning"><span class="status-indicator"></span>' . $product->stock_quantity . '</span>';
+                        return '<span class="status-pill status-pill-warning"><span class="status-indicator"></span>'.$product->stock_quantity.'</span>';
                     } else {
-                        return '<span class="status-pill status-pill-success"><span class="status-indicator"></span>' . $product->stock_quantity . '</span>';
+                        return '<span class="status-pill status-pill-success"><span class="status-indicator"></span>'.$product->stock_quantity.'</span>';
                     }
                 })
                 ->addColumn('stock_value', function ($product) {
-                    return '<strong>' . number_format($product->stock_quantity * $product->purchase_price, 2) . '</strong>';
+                    return '<strong>'.number_format($product->stock_quantity * $product->purchase_price, 2).'</strong>';
                 })
                 ->rawColumns(['shop_badge', 'custom_attributes', 'stock_quantity', 'stock_value'])
                 ->make(true);
@@ -98,7 +103,7 @@ class StockController extends Controller
 
         $supportsModelName = Schema::hasColumn('products', 'model_name');
 
-        $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        $products = new LengthAwarePaginator([], 0, 20);
         $attributesByProductId = [];
 
         return view('stock::index', [
@@ -112,7 +117,7 @@ class StockController extends Controller
 
     private function applySearchFilter($query, string $searchTerm, bool $supportsModelName): void
     {
-        $like = '%' . $searchTerm . '%';
+        $like = '%'.$searchTerm.'%';
 
         $query->where(function ($searchQuery) use ($like, $supportsModelName) {
             $searchQuery->where('name', 'like', $like)

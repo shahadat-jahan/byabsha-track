@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use Modules\Subscription\Models\SubscriptionPlan;
+
 class Subscription
 {
     /**
      * Return available plans as simple arrays for the admin UI.
      * Premium includes all features; Basic and Standard have limited features.
-     *
-     * @return array
      */
     public static function plans(): array
     {
         // Load plans from DB (subscription_plans table) and return a simple array representation
-        $models = \Modules\Subscription\Models\SubscriptionPlan::query()
+        $models = SubscriptionPlan::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
@@ -22,7 +22,7 @@ class Subscription
             return [
                 'key' => $plan->slug,
                 'name' => $plan->name,
-                'price' => $plan->isFree() ? 'Free' : ($plan->price . ' / ' . $plan->billing_cycle),
+                'price' => $plan->isFree() ? 'Free' : ($plan->price.' / '.$plan->billing_cycle),
                 'description' => $plan->description,
                 'features' => $plan->features ?? [],
                 'limits' => $plan->limits ?? [],
@@ -37,10 +37,10 @@ class Subscription
      */
     public static function getPlanLimits(string $planKey = 'basic'): array
     {
-        $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', $planKey)->first();
-        if (!$plan) {
+        $plan = SubscriptionPlan::where('slug', $planKey)->first();
+        if (! $plan) {
             // fallback to basic DB plan or default basic limits
-            $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', 'basic')->first() ?: \Modules\Subscription\Models\SubscriptionPlan::freePlan();
+            $plan = SubscriptionPlan::where('slug', 'basic')->first() ?: SubscriptionPlan::freePlan();
         }
 
         // Normalize limits: prefer JSON 'limits' if present, otherwise map legacy columns
@@ -61,9 +61,9 @@ class Subscription
      */
     public static function getFeatureLimits(string $feature, string $planKey = 'basic'): mixed
     {
-        $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', $planKey)->first();
-        if (!$plan) {
-            $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', 'basic')->first() ?: \Modules\Subscription\Models\SubscriptionPlan::freePlan();
+        $plan = SubscriptionPlan::where('slug', $planKey)->first();
+        if (! $plan) {
+            $plan = SubscriptionPlan::where('slug', 'basic')->first() ?: SubscriptionPlan::freePlan();
         }
 
         // try features JSON first
@@ -91,9 +91,9 @@ class Subscription
      */
     public static function isFeatureAvailable(string $feature, string $planKey = 'basic'): bool
     {
-        $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', $planKey)->first();
-        if (!$plan) {
-            $plan = \Modules\Subscription\Models\SubscriptionPlan::where('slug', 'basic')->first() ?: \Modules\Subscription\Models\SubscriptionPlan::freePlan();
+        $plan = SubscriptionPlan::where('slug', $planKey)->first();
+        if (! $plan) {
+            $plan = SubscriptionPlan::where('slug', 'basic')->first() ?: SubscriptionPlan::freePlan();
         }
 
         // features JSON

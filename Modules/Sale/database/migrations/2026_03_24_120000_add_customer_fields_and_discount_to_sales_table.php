@@ -12,19 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            if (!Schema::hasColumn('sales', 'discount')) {
+            if (! Schema::hasColumn('sales', 'discount')) {
                 $table->decimal('discount', 10, 2)->default(0)->after('sale_price');
             }
 
-            if (!Schema::hasColumn('sales', 'customer_name')) {
+            if (! Schema::hasColumn('sales', 'customer_name')) {
                 $table->string('customer_name')->nullable()->after('sale_date');
             }
 
-            if (!Schema::hasColumn('sales', 'customer_phone')) {
+            if (! Schema::hasColumn('sales', 'customer_phone')) {
                 $table->string('customer_phone', 30)->nullable()->after('customer_name');
             }
 
-            if (!Schema::hasColumn('sales', 'customer_address')) {
+            if (! Schema::hasColumn('sales', 'customer_address')) {
                 $table->string('customer_address', 500)->nullable()->after('customer_phone');
             }
         });
@@ -54,7 +54,7 @@ return new class extends Migration
                 $columnsToDrop[] = 'discount';
             }
 
-            if (!empty($columnsToDrop)) {
+            if (! empty($columnsToDrop)) {
                 $table->dropColumn($columnsToDrop);
             }
         });

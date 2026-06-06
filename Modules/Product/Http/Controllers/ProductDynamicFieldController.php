@@ -5,9 +5,9 @@ namespace Modules\Product\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Str;
 use Modules\Category\Models\Category;
 use Modules\Product\Models\ProductDynamicField;
 
@@ -27,7 +27,7 @@ class ProductDynamicFieldController extends Controller
                     return $field->creator?->name ?? '-';
                 })
                 ->editColumn('field_key', function ($field) {
-                    return '<span class="key-chip">' . e($field->field_key) . '</span>';
+                    return '<span class="key-chip">'.e($field->field_key).'</span>';
                 })
                 ->editColumn('input_type', function ($field) {
                     return strtoupper(e($field->input_type));
@@ -35,12 +35,14 @@ class ProductDynamicFieldController extends Controller
                 ->editColumn('is_active', function ($field) {
                     $class = $field->is_active ? 'text-bg-success' : 'text-bg-secondary';
                     $text = $field->is_active ? __('app.active') : __('app.inactive');
-                    return '<span class="badge ' . $class . '">' . e($text) . '</span>';
+
+                    return '<span class="badge '.$class.'">'.e($text).'</span>';
                 })
                 ->editColumn('is_required', function ($field) {
                     $class = $field->is_required ? 'text-bg-danger' : 'text-bg-light border';
                     $text = $field->is_required ? __('app.yes') : __('app.no');
-                    return '<span class="badge ' . $class . '">' . e($text) . '</span>';
+
+                    return '<span class="badge '.$class.'">'.e($text).'</span>';
                 })
                 ->addColumn('actions', function ($field) {
                     $editRoute = route('product.dynamic-fields.edit', $field->id);
@@ -205,7 +207,7 @@ class ProductDynamicFieldController extends Controller
             ->where('category_id', $categoryId)
             ->where('field_key', $fieldKey)
             ->exists()) {
-            $fieldKey = $baseKey . '_' . $suffix;
+            $fieldKey = $baseKey.'_'.$suffix;
             $suffix++;
         }
 

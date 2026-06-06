@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             // Add new columns only if they don't exist
-            if (!Schema::hasColumn('products', 'category')) {
+            if (! Schema::hasColumn('products', 'category')) {
                 $table->string('category')->nullable()->after('name');
             }
-            if (!Schema::hasColumn('products', 'brand')) {
+            if (! Schema::hasColumn('products', 'brand')) {
                 $table->string('brand')->nullable()->after('category');
             }
 
@@ -34,7 +34,7 @@ return new class extends Migration
                 $table->dropUnique('products_sku_unique');
             }
 
-            if (!empty($existingColumns)) {
+            if (! empty($existingColumns)) {
                 $table->dropColumn($existingColumns);
             }
         });

@@ -5,6 +5,7 @@ namespace Modules\Subscription\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\Subscription\Models\PaymentRequest;
 use Modules\Subscription\Models\SubscriptionPlan;
 
 class PlanController extends Controller
@@ -12,6 +13,7 @@ class PlanController extends Controller
     public function index()
     {
         $plans = SubscriptionPlan::orderBy('sort_order')->get();
+
         return view('subscription::admin.plans.index', compact('plans'));
     }
 
@@ -33,20 +35,20 @@ class PlanController extends Controller
             'show_in_owner_panel' => 'nullable|boolean',
         ]);
 
-        $plan = new SubscriptionPlan();
+        $plan = new SubscriptionPlan;
         $plan->name = $data['name'];
-        
+
         $slug = Str::slug($data['name']);
         $count = SubscriptionPlan::where('slug', $slug)->count();
         if ($count > 0) {
-            $slug = $slug . '-' . time();
+            $slug = $slug.'-'.time();
         }
         $plan->slug = $slug;
 
         $plan->price = $data['price'];
         $plan->duration_days = $data['duration_days'];
         $plan->status = $data['status'];
-        $plan->billing_cycle = $data['duration_days'] . ' days';
+        $plan->billing_cycle = $data['duration_days'].' days';
         $plan->description = $data['description'] ?? null;
         $plan->is_active = ($data['status'] === 'active');
 
@@ -87,12 +89,12 @@ class PlanController extends Controller
         ]);
 
         $plan->name = $data['name'];
-        
+
         $slug = Str::slug($data['name']);
         if ($plan->slug !== $slug) {
             $count = SubscriptionPlan::where('slug', $slug)->where('id', '!=', $plan->id)->count();
             if ($count > 0) {
-                $slug = $slug . '-' . time();
+                $slug = $slug.'-'.time();
             }
             $plan->slug = $slug;
         }
@@ -100,7 +102,7 @@ class PlanController extends Controller
         $plan->price = $data['price'];
         $plan->duration_days = $data['duration_days'];
         $plan->status = $data['status'];
-        $plan->billing_cycle = $data['duration_days'] . ' days';
+        $plan->billing_cycle = $data['duration_days'].' days';
         $plan->description = $data['description'] ?? null;
         $plan->is_active = ($data['status'] === 'active');
 
@@ -125,7 +127,7 @@ class PlanController extends Controller
     public function destroy(SubscriptionPlan $plan)
     {
         $hasSubscriptions = $plan->subscriptions()->exists();
-        $hasPaymentRequests = \Modules\Subscription\Models\PaymentRequest::where('subscription_plan_id', $plan->id)->exists();
+        $hasPaymentRequests = PaymentRequest::where('subscription_plan_id', $plan->id)->exists();
 
         if ($hasSubscriptions || $hasPaymentRequests) {
             return redirect()->route('admin.subscriptions.plans.index')
@@ -133,6 +135,7 @@ class PlanController extends Controller
         }
 
         $plan->delete();
+
         return redirect()->route('admin.subscriptions.plans.index')->with('success', 'Plan deleted successfully.');
     }
 }

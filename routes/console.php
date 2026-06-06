@@ -9,6 +9,7 @@ use Modules\Product\Models\Product;
 use Modules\Sale\Models\Sale;
 use Modules\Settings\Models\Setting;
 use Modules\Shop\Models\Shop;
+use Modules\Subscription\Models\Subscription;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -113,7 +114,7 @@ Artisan::command('notifications:daily-summary', function () {
             'type' => 'daily_summary',
             'title' => __('notifications.type_daily_summary'),
             'message' => __('notifications.daily_summary_message').
-                " (Txn: {$totalTransactions}, Revenue: ".number_format($totalRevenue, 2).", Profit: ".number_format($totalProfit, 2).')',
+                " (Txn: {$totalTransactions}, Revenue: ".number_format($totalRevenue, 2).', Profit: '.number_format($totalProfit, 2).')',
             'data' => [
                 'date' => $today->toDateString(),
                 'total_transactions' => $totalTransactions,
@@ -135,7 +136,7 @@ Schedule::command('notifications:daily-summary')->dailyAt('21:00');
 
 Artisan::command('subscription:check-expiry', function () {
     $now = now();
-    $subscriptions = \Modules\Subscription\Models\Subscription::where('status', 'active')
+    $subscriptions = Subscription::where('status', 'active')
         ->whereNotNull('ends_at')
         ->where('ends_at', '<=', $now)
         ->with(['user', 'plan'])
@@ -145,14 +146,14 @@ Artisan::command('subscription:check-expiry', function () {
     foreach ($subscriptions as $sub) {
         $sub->update(['status' => 'expired']);
 
-        \App\Models\Notification::create([
+        Notification::create([
             'user_id' => $sub->user_id,
-            'type'    => 'subscription_expired',
-            'title'   => 'Subscription Expired',
+            'type' => 'subscription_expired',
+            'title' => 'Subscription Expired',
             'message' => "Your subscription to the {$sub->plan->name} plan has expired. Please buy a subscription to restore access.",
-            'data'    => [
+            'data' => [
                 'plan_slug' => $sub->plan->slug,
-                'url'       => route('subscription.plans')
+                'url' => route('subscription.plans'),
             ],
         ]);
 

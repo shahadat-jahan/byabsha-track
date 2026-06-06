@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscription_plans', function (Blueprint $table) {
-            if (!Schema::hasColumn('subscription_plans', 'features')) {
+            if (! Schema::hasColumn('subscription_plans', 'features')) {
                 $table->json('features')->nullable()->after('description');
             }
-            if (!Schema::hasColumn('subscription_plans', 'limits')) {
+            if (! Schema::hasColumn('subscription_plans', 'limits')) {
                 $table->json('limits')->nullable()->after('features');
             }
         });

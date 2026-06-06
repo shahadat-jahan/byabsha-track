@@ -2,15 +2,21 @@
 
 namespace App\Models;
 
+use App\Services\ShopContext;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
+use Modules\Branch\Models\Branch;
+use Modules\Shop\Models\Shop;
+use Modules\Subscription\Models\SubscriptionPlan;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
     public const MODULE_ACCESS_KEYS = [
@@ -133,21 +139,21 @@ class User extends Authenticatable
         }
 
         // 1. Resolve current active shop context
-        $shopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $shopId = app(ShopContext::class)->getActiveShopId();
 
-        if (!$shopId) {
+        if (! $shopId) {
             // Permit access to core registration/setup modules if no shop exists yet
             return in_array($moduleKey, ['dashboard', 'shop', 'subscription'], true);
         }
 
         // 2. Fetch the shop to query its subscription features
-        $shop = \Modules\Shop\Models\Shop::find($shopId);
-        if (!$shop) {
+        $shop = Shop::find($shopId);
+        if (! $shop) {
             return false;
         }
 
         // 3. Verify module is enabled in active subscription for the shop
-        if (!$shop->hasFeature($moduleKey)) {
+        if (! $shop->hasFeature($moduleKey)) {
             return false;
         }
 
@@ -208,7 +214,7 @@ class User extends Authenticatable
      */
     public function shops()
     {
-        return $this->hasMany(\Modules\Shop\Models\Shop::class, 'user_id');
+        return $this->hasMany(Shop::class, 'user_id');
     }
 
     /**
@@ -216,7 +222,7 @@ class User extends Authenticatable
      */
     public function assignedShop()
     {
-        return $this->belongsTo(\Modules\Shop\Models\Shop::class, 'shop_id');
+        return $this->belongsTo(Shop::class, 'shop_id');
     }
 
     /**
@@ -224,7 +230,7 @@ class User extends Authenticatable
      */
     public function assignedBranch()
     {
-        return $this->belongsTo(\Modules\Branch\Models\Branch::class, 'branch_id');
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     /**
@@ -251,7 +257,7 @@ class User extends Authenticatable
     public function accessibleShopIds(): array
     {
         if ($this->isSuperAdmin()) {
-            return \Modules\Shop\Models\Shop::pluck('id')->all();
+            return Shop::pluck('id')->all();
         }
 
         if ($this->isManager()) {
@@ -268,7 +274,7 @@ class User extends Authenticatable
 
     public function activeSubscription(): ?\Modules\Subscription\Models\Subscription
     {
-        $shopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $shopId = app(ShopContext::class)->getActiveShopId();
         if ($shopId) {
             return \Modules\Subscription\Models\Subscription::where('shop_id', $shopId)
                 ->where('status', 'active')
@@ -290,60 +296,61 @@ class User extends Authenticatable
             ->first();
     }
 
-    public function currentPlan(): \Modules\Subscription\Models\SubscriptionPlan
+    public function currentPlan(): SubscriptionPlan
     {
         return $this->activeSubscription()?->plan
-            ?? \Modules\Subscription\Models\SubscriptionPlan::freePlan()
-            ?? new \Modules\Subscription\Models\SubscriptionPlan([
-                'name'           => 'Free Trial',
-                'slug'           => 'free',
-                'price'          => 0,
-                'max_shops'      => null,
-                'max_branches'   => null,
-                'max_brands'     => null,
+            ?? SubscriptionPlan::freePlan()
+            ?? new SubscriptionPlan([
+                'name' => 'Free Trial',
+                'slug' => 'free',
+                'price' => 0,
+                'max_shops' => null,
+                'max_branches' => null,
+                'max_brands' => null,
                 'max_categories' => null,
-                'max_sales'      => null,
-                'has_capital'    => false,
-                'has_restock'    => false,
-                'has_reports'    => false,
-                'is_trial'       => true,
-                'trial_days'     => 30,
+                'max_sales' => null,
+                'has_capital' => false,
+                'has_restock' => false,
+                'has_reports' => false,
+                'is_trial' => true,
+                'trial_days' => 30,
             ]);
     }
 
     /** True while the user's free trial subscription is still active. */
     public function onTrial(): bool
     {
-        $shopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $shopId = app(ShopContext::class)->getActiveShopId();
         if ($shopId) {
             return \Modules\Subscription\Models\Subscription::where('shop_id', $shopId)
-                ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+                ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
                 ->where('status', 'active')
                 ->where('ends_at', '>', now())
                 ->exists();
         }
 
         return $this->subscriptions()
-            ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+            ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
             ->where('status', 'active')
             ->where('ends_at', '>', now())
             ->exists();
     }
 
     /** The date/time the user's trial ends, or null if no trial subscription exists. */
-    public function trialEndsAt(): ?\Illuminate\Support\Carbon
+    public function trialEndsAt(): ?Carbon
     {
-        $shopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $shopId = app(ShopContext::class)->getActiveShopId();
         if ($shopId) {
             $trial = \Modules\Subscription\Models\Subscription::where('shop_id', $shopId)
-                ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+                ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
                 ->latest()
                 ->first();
+
             return $trial?->ends_at;
         }
 
         $trial = $this->subscriptions()
-            ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+            ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
             ->latest()
             ->first();
 
@@ -360,13 +367,13 @@ class User extends Authenticatable
             return false;
         }
 
-        $shopId = app(\App\Services\ShopContext::class)->getActiveShopId();
+        $shopId = app(ShopContext::class)->getActiveShopId();
         if ($shopId) {
             // Check if this shop has an active paid subscription
             $hasPaidSub = \Modules\Subscription\Models\Subscription::where('shop_id', $shopId)
-                ->whereHas('plan', fn($q) => $q->where('is_trial', false)->where('price', '>', 0))
+                ->whereHas('plan', fn ($q) => $q->where('is_trial', false)->where('price', '>', 0))
                 ->where('status', 'active')
-                ->where(fn($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+                ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
                 ->exists();
 
             if ($hasPaidSub) {
@@ -375,13 +382,14 @@ class User extends Authenticatable
 
             // Check if this shop has a trial subscription that is still active
             $trialSub = \Modules\Subscription\Models\Subscription::where('shop_id', $shopId)
-                ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+                ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
                 ->latest()
                 ->first();
 
-            if (!$trialSub) {
+            if (! $trialSub) {
                 // If there's no trial sub but we have a shop, treat as expired if shop is older than 30 days
-                $shop = \Modules\Shop\Models\Shop::find($shopId);
+                $shop = Shop::find($shopId);
+
                 return $shop ? $shop->created_at->lt(now()->subDays(30)) : true;
             }
 
@@ -390,9 +398,9 @@ class User extends Authenticatable
 
         // Fallback: check if the user has any active paid subscription
         $hasPaidSub = $this->subscriptions()
-            ->whereHas('plan', fn($q) => $q->where('is_trial', false)->where('price', '>', 0))
+            ->whereHas('plan', fn ($q) => $q->where('is_trial', false)->where('price', '>', 0))
             ->where('status', 'active')
-            ->where(fn($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
             ->exists();
 
         if ($hasPaidSub) {
@@ -400,11 +408,11 @@ class User extends Authenticatable
         }
 
         $trialSub = $this->subscriptions()
-            ->whereHas('plan', fn($q) => $q->where('is_trial', true))
+            ->whereHas('plan', fn ($q) => $q->where('is_trial', true))
             ->latest()
             ->first();
 
-        if (!$trialSub) {
+        if (! $trialSub) {
             return $this->created_at->lt(now()->subDays(30));
         }
 
@@ -434,7 +442,7 @@ class User extends Authenticatable
      */
     public function getPlanLimits(): array
     {
-        return \App\Models\Subscription::getPlanLimits($this->getCurrentPlanKey());
+        return Subscription::getPlanLimits($this->getCurrentPlanKey());
     }
 
     /**
@@ -454,7 +462,7 @@ class User extends Authenticatable
             return true;
         }
 
-        return \App\Models\Subscription::isFeatureAvailable($feature, $this->getCurrentPlanKey());
+        return Subscription::isFeatureAvailable($feature, $this->getCurrentPlanKey());
     }
 
     /**
@@ -466,7 +474,7 @@ class User extends Authenticatable
             return 999999;
         }
 
-        return \App\Models\Subscription::getFeatureLimits($feature, $this->getCurrentPlanKey());
+        return Subscription::getFeatureLimits($feature, $this->getCurrentPlanKey());
     }
 
     /**

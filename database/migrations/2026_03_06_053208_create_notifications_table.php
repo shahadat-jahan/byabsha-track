@@ -20,7 +20,7 @@ return new class extends Migration
             $table->json('data')->nullable(); // Additional data (product_id, shop_id, etc.)
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'read_at']);
         });
     }

@@ -1,17 +1,22 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
+use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Models\User;
-use Modules\Shop\Models\Shop;
-use Modules\Branch\Models\Branch;
-use Modules\Product\Models\ProductDynamicField;
-use Modules\Category\Models\Category;
-use Modules\Brand\Models\Brand;
+use App\Services\PlanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Branch\Models\Branch;
+use Modules\Brand\Models\Brand;
+use Modules\Category\Models\Category;
+use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductBatch;
+use Modules\Product\Models\ProductDynamicField;
+use Modules\Shop\Models\Shop;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->mock(\App\Services\PlanService::class, function ($mock) {
+    $this->mock(PlanService::class, function ($mock) {
         $mock->shouldReceive('isFeatureEnabled')->andReturn(true);
         $mock->shouldReceive('canCreate')->andReturn(true);
     });
@@ -21,7 +26,7 @@ test('cannot create branch with duplicate location name even if it is soft delet
     $user = User::factory()->create(['role' => 'superadmin']);
     $shop = Shop::create([
         'name' => 'Test Shop',
-        'user_id' => $user->id
+        'user_id' => $user->id,
     ]);
 
     // Create a branch
@@ -51,10 +56,10 @@ test('cannot create branch with duplicate location name even if it is soft delet
 
 test('cannot create product dynamic field with duplicate key even if it is soft deleted', function () {
     $user = User::factory()->create(['role' => 'superadmin']);
-    
+
     $category = Category::create([
         'name' => 'Electronics',
-        'user_id' => $user->id
+        'user_id' => $user->id,
     ]);
 
     // Create a dynamic field
@@ -83,12 +88,12 @@ test('cannot create product dynamic field with duplicate key even if it is soft 
     // generateFieldKey should auto-append a suffix (e.g. ram_2) because the key 'ram' is already taken
     // Let's verify that the new field is successfully created but with key 'ram_2'
     $response->assertRedirect(route('product.dynamic-fields.index'));
-    
+
     $newField = ProductDynamicField::where('category_id', $category->id)
         ->where('label', 'RAM')
         ->whereNull('deleted_at')
         ->first();
-        
+
     expect($newField)->not->toBeNull();
     expect($newField->field_key)->toBe('ram_2');
 });
@@ -121,7 +126,7 @@ test('superadmin can see owner in shop list, edit form, and update shop owner', 
     ]);
 
     $response->assertRedirect(route('shop.index'));
-    
+
     // Assert owner was updated in DB
     $shop->refresh();
     expect($shop->user_id)->toBe($owner2->id);
@@ -130,10 +135,10 @@ test('superadmin can see owner in shop list, edit form, and update shop owner', 
 
 test('only owners and superadmins can access brand CRUD and superadmin can monitor creators and counts', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
-    
+
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
     $manager = User::factory()->create(['role' => 'manager', 'name' => 'Store Manager User']);
@@ -150,7 +155,7 @@ test('only owners and superadmins can access brand CRUD and superadmin can monit
     // 3. Create a brand as owner
     $brand = Brand::create([
         'name' => 'Owner Brand',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // 4. Assert superadmin (Admin) can view the brand and monitor creators and counts
@@ -165,10 +170,10 @@ test('only owners and superadmins can access brand CRUD and superadmin can monit
 
 test('owners, managers, and superadmins can access category CRUD and superadmin can monitor creators and counts', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
-    
+
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
     $owner = User::factory()->create(['role' => 'owner', 'name' => 'Shop Owner User']);
     $manager = User::factory()->create(['role' => 'manager', 'name' => 'Store Manager User']);
@@ -184,7 +189,7 @@ test('owners, managers, and superadmins can access category CRUD and superadmin 
     // 3. Create a category as owner
     $category = Category::create([
         'name' => 'Owner Category',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // 4. Assert superadmin (Admin) can view the category and monitor creators and counts
@@ -199,8 +204,8 @@ test('owners, managers, and superadmins can access category CRUD and superadmin 
 
 test('admin can monitor who created branch and created_by is assigned on store', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -208,7 +213,7 @@ test('admin can monitor who created branch and created_by is assigned on store',
 
     $shop = Shop::create([
         'name' => 'Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // Create branch via HTTP POST request
@@ -221,7 +226,7 @@ test('admin can monitor who created branch and created_by is assigned on store',
 
     // Assert it redirects
     $response->assertRedirect();
-    
+
     // Assert created_by was correctly stored
     $branch = Branch::where('shop_id', $shop->id)->where('name', 'Dhaka Branch')->first();
     expect($branch)->not->toBeNull();
@@ -232,7 +237,7 @@ test('admin can monitor who created branch and created_by is assigned on store',
         ->get(route('branch.index'), ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
     $ajaxResponse->assertStatus(200);
     $ajaxResponse->assertSee('Shop Owner User');
-    
+
     // Assert show page displays creator's name
     $showResponse = $this->actingAs($superadmin)->get(route('branch.show', $branch->id));
     $showResponse->assertStatus(200);
@@ -241,8 +246,8 @@ test('admin can monitor who created branch and created_by is assigned on store',
 
 test('admin can monitor who created product and created_by is assigned on store', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -250,7 +255,7 @@ test('admin can monitor who created product and created_by is assigned on store'
 
     $shop = Shop::create([
         'name' => 'Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // Create product via HTTP POST request
@@ -264,9 +269,9 @@ test('admin can monitor who created product and created_by is assigned on store'
 
     // Assert it redirects
     $response->assertRedirect();
-    
+
     // Assert created_by was correctly stored
-    $product = Modules\Product\Models\Product::where('shop_id', $shop->id)->where('name', 'Test Product')->first();
+    $product = Product::where('shop_id', $shop->id)->where('name', 'Test Product')->first();
     expect($product)->not->toBeNull();
     expect($product->created_by)->toBe($owner->id);
 
@@ -275,7 +280,7 @@ test('admin can monitor who created product and created_by is assigned on store'
         ->get(route('product.index', ['shop_id' => $shop->id]), ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
     $indexResponse->assertStatus(200);
     $indexResponse->assertSee('Shop Owner User');
-    
+
     // Assert show page displays creator's name
     $showResponse = $this->actingAs($superadmin)->get(route('product.show', $product->id));
     $showResponse->assertStatus(200);
@@ -284,8 +289,8 @@ test('admin can monitor who created product and created_by is assigned on store'
 
 test('admin can monitor who created product dynamic field and created_by is assigned on store', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -315,8 +320,8 @@ test('admin can monitor who created product dynamic field and created_by is assi
 
 test('admin can monitor who created product in stock overview list', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -324,11 +329,11 @@ test('admin can monitor who created product in stock overview list', function ()
 
     $shop = Shop::create([
         'name' => 'Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
     // Create product
-    $product = Modules\Product\Models\Product::create([
+    $product = Product::create([
         'shop_id' => $shop->id,
         'name' => 'Test Stock Product',
         'purchase_price' => 120,
@@ -347,8 +352,8 @@ test('admin can monitor who created product in stock overview list', function ()
 
 test('admin can view products table for sales with yajra datatable structure and primary sale button', function () {
     $this->withoutMiddleware([
-        \App\Http\Middleware\EnsureSubscriptionActive::class,
-        \App\Http\Middleware\CheckModuleAccess::class,
+        EnsureSubscriptionActive::class,
+        CheckModuleAccess::class,
     ]);
 
     $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Admin User']);
@@ -356,10 +361,10 @@ test('admin can view products table for sales with yajra datatable structure and
 
     $shop = Shop::create([
         'name' => 'Sales Test Shop',
-        'user_id' => $owner->id
+        'user_id' => $owner->id,
     ]);
 
-    $product = Modules\Product\Models\Product::create([
+    $product = Product::create([
         'shop_id' => $shop->id,
         'name' => 'Redesigned Sale Product',
         'purchase_price' => 200,
@@ -369,7 +374,7 @@ test('admin can view products table for sales with yajra datatable structure and
     ]);
 
     // Create a product batch for this product
-    $batch = Modules\Product\Models\ProductBatch::create([
+    $batch = ProductBatch::create([
         'product_id' => $product->id,
         'shop_id' => $shop->id,
         'batch_code' => 'BATCH-SALES-XYZ',
@@ -388,6 +393,3 @@ test('admin can view products table for sales with yajra datatable structure and
     $response->assertSee('btn-sale-primary js-sale-btn');
     $response->assertSee('btn-actions-dropdown');
 });
-
-
-

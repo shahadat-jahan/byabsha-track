@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Modules\Shop\Database\Seeders\ShopSeeder;
+
 // use Modules\Category\Database\Seeders\CategorySeeder;
 
 class DatabaseSeeder extends Seeder
@@ -27,8 +28,8 @@ class DatabaseSeeder extends Seeder
 
             if ($this->command) {
                 $this->command->warn('SUPERADMIN_PASSWORD was not set. A random password was generated for the seeded superadmin.');
-                $this->command->line('Superadmin Email: ' . $superAdminEmail);
-                $this->command->line('Superadmin Password: ' . $superAdminPassword);
+                $this->command->line('Superadmin Email: '.$superAdminEmail);
+                $this->command->line('Superadmin Password: '.$superAdminPassword);
             }
         }
 

@@ -13,6 +13,7 @@ use Modules\Product\Services\ProductBatchService;
 class DamageService
 {
     protected CapitalService $capitalService;
+
     protected ProductBatchService $productBatchService;
 
     public function __construct(CapitalService $capitalService, ProductBatchService $productBatchService)
@@ -30,19 +31,19 @@ class DamageService
             'items.productBatch' => fn ($query) => $query->withTrashed(),
         ])->latest('damage_date');
 
-        if (!empty($filters['shop_ids'])) {
+        if (! empty($filters['shop_ids'])) {
             $query->whereIn('shop_id', $filters['shop_ids']);
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('damage_date', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('damage_date', '<=', $filters['date_to']);
         }
 
@@ -85,22 +86,22 @@ class DamageService
                     ->lockForUpdate()
                     ->first();
 
-                if (!$batch) {
+                if (! $batch) {
                     throw ValidationException::withMessages([
-                        'items.' . $index . '.product_batch_id' => 'Selected batch does not belong to the selected shop.',
+                        'items.'.$index.'.product_batch_id' => 'Selected batch does not belong to the selected shop.',
                     ]);
                 }
 
                 if ((int) $batch->product_id !== (int) $item['product_id']) {
                     throw ValidationException::withMessages([
-                        'items.' . $index . '.product_id' => 'Selected product does not match the selected batch.',
+                        'items.'.$index.'.product_id' => 'Selected product does not match the selected batch.',
                     ]);
                 }
 
                 $quantity = (int) $item['quantity'];
                 if ((int) $batch->remaining_quantity < $quantity) {
                     throw ValidationException::withMessages([
-                        'items.' . $index . '.quantity' => 'Insufficient batch stock. Available: ' . $batch->remaining_quantity,
+                        'items.'.$index.'.quantity' => 'Insufficient batch stock. Available: '.$batch->remaining_quantity,
                     ]);
                 }
 
@@ -163,6 +164,6 @@ class DamageService
     {
         $date = date('Ymd', strtotime($damageDate));
 
-        return 'DMG-' . $date . '-' . str_pad((string) $id, 5, '0', STR_PAD_LEFT);
+        return 'DMG-'.$date.'-'.str_pad((string) $id, 5, '0', STR_PAD_LEFT);
     }
 }

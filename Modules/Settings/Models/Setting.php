@@ -17,7 +17,7 @@ class Setting extends TenantModel
         return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
             $setting = self::where('key', $key)->first();
 
-            if (!$setting) {
+            if (! $setting) {
                 return $default;
             }
 
@@ -35,7 +35,7 @@ class Setting extends TenantModel
             [
                 'value' => is_array($value) ? json_encode($value) : $value,
                 'type' => $type,
-                'group' => $group
+                'group' => $group,
             ]
         );
 
@@ -101,7 +101,7 @@ class Setting extends TenantModel
      */
     private static function castValue($value, string $type)
     {
-        return match($type) {
+        return match ($type) {
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'number', 'integer' => (int) $value,
             'float' => (float) $value,

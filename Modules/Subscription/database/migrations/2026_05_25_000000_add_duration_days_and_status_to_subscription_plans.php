@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscription_plans', function (Blueprint $table) {
-            if (!Schema::hasColumn('subscription_plans', 'duration_days')) {
+            if (! Schema::hasColumn('subscription_plans', 'duration_days')) {
                 $table->unsignedInteger('duration_days')->default(30)->after('price');
             }
-            if (!Schema::hasColumn('subscription_plans', 'status')) {
+            if (! Schema::hasColumn('subscription_plans', 'status')) {
                 $table->string('status')->default('active')->after('duration_days');
             }
         });

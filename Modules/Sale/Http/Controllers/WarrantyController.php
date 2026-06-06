@@ -3,6 +3,7 @@
 namespace Modules\Sale\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Modules\Sale\Models\Sale;
@@ -13,15 +14,13 @@ use Yajra\DataTables\Facades\DataTables;
 
 class WarrantyController extends Controller
 {
-    public function __construct(protected WarrantyExchangeService $service)
-    {
-    }
+    public function __construct(protected WarrantyExchangeService $service) {}
 
     public function index(Request $request)
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
         $filters = $request->only(['shop_id', 'status']);
 
@@ -32,13 +31,13 @@ class WarrantyController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $allowedShopIds = $user->accessibleShopIds();
 
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
 
-        if ($shopId && !in_array((int) $shopId, $allowedShopIds, true)) {
+        if ($shopId && ! in_array((int) $shopId, $allowedShopIds, true)) {
             abort(403, 'You do not have access to this shop.');
         }
 
@@ -86,26 +85,27 @@ class WarrantyController extends Controller
                 $search = request('search')['value'] ?? null;
                 if ($search) {
                     $q->where(function ($sub) use ($search) {
-                        $sub->where('sale_warranties.warranty_code', 'like', '%' . $search . '%')
-                            ->orWhere('products.name', 'like', '%' . $search . '%')
-                            ->orWhere('sales.customer_name', 'like', '%' . $search . '%')
-                            ->orWhere('shops.name', 'like', '%' . $search . '%');
+                        $sub->where('sale_warranties.warranty_code', 'like', '%'.$search.'%')
+                            ->orWhere('products.name', 'like', '%'.$search.'%')
+                            ->orWhere('sales.customer_name', 'like', '%'.$search.'%')
+                            ->orWhere('shops.name', 'like', '%'.$search.'%');
                     });
                 }
             }, false)
             ->addColumn('warranty_code_label', function (SaleWarranty $warranty) {
-                return '<strong class="text-teal" style="font-size: 0.88rem;"><i class="bi bi-shield-check"></i> ' . e($warranty->warranty_code) . '</strong>';
+                return '<strong class="text-teal" style="font-size: 0.88rem;"><i class="bi bi-shield-check"></i> '.e($warranty->warranty_code).'</strong>';
             })
             ->addColumn('shop_name_label', function (SaleWarranty $warranty) {
-                return '<span class="badge bg-light text-dark border"><i class="bi bi-shop"></i> ' . e($warranty->shop_name ?? '-') . '</span>';
+                return '<span class="badge bg-light text-dark border"><i class="bi bi-shop"></i> '.e($warranty->shop_name ?? '-').'</span>';
             })
             ->addColumn('warranty_period_label', function (SaleWarranty $warranty) {
-                return '<span class="text-semibold-muted" style="font-size: 0.82rem;"><i class="bi bi-calendar-event"></i> ' . e($warranty->start_date->format('d M Y')) . ' - ' . e($warranty->end_date->format('d M Y')) . '</span>';
+                return '<span class="text-semibold-muted" style="font-size: 0.82rem;"><i class="bi bi-calendar-event"></i> '.e($warranty->start_date->format('d M Y')).' - '.e($warranty->end_date->format('d M Y')).'</span>';
             })
             ->addColumn('status_label', function (SaleWarranty $warranty) {
                 $effectiveStatus = ($warranty->status === 'active' && $warranty->end_date->isPast()) ? 'expired' : $warranty->status;
                 $pillClass = $effectiveStatus === 'active' ? 'success' : ($effectiveStatus === 'claimed' ? 'info' : ($effectiveStatus === 'expired' ? 'warning' : 'danger'));
-                return '<span class="status-pill status-pill-' . $pillClass . '"><span class="status-indicator"></span>' . e(__('sale.status_' . $effectiveStatus)) . '</span>';
+
+                return '<span class="status-pill status-pill-'.$pillClass.'"><span class="status-indicator"></span>'.e(__('sale.status_'.$effectiveStatus)).'</span>';
             })
             ->addColumn('actions', function (SaleWarranty $warranty) {
                 $effectiveStatus = ($warranty->status === 'active' && $warranty->end_date->isPast()) ? 'expired' : $warranty->status;
@@ -113,24 +113,25 @@ class WarrantyController extends Controller
                     $claimUrl = route('sale.warranties.claim', $warranty->id);
                     $voidUrl = route('sale.warranties.void', $warranty->id);
                     $csrf = csrf_field();
-                    
+
                     return '
                         <div class="d-flex gap-1 justify-content-center">
-                            <form method="POST" action="' . $claimUrl . '" class="d-inline" onsubmit="return confirm(\'Confirm warranty claim?\')">
-                                ' . $csrf . '
+                            <form method="POST" action="'.$claimUrl.'" class="d-inline" onsubmit="return confirm(\'Confirm warranty claim?\')">
+                                '.$csrf.'
                                 <button type="submit" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-check-circle"></i> ' . e(__('sale.warranty_mark_claimed')) . '
+                                    <i class="bi bi-check-circle"></i> '.e(__('sale.warranty_mark_claimed')).'
                                 </button>
                             </form>
-                            <form method="POST" action="' . $voidUrl . '" class="d-inline" onsubmit="return confirm(\'Void this warranty?\')">
-                                ' . $csrf . '
+                            <form method="POST" action="'.$voidUrl.'" class="d-inline" onsubmit="return confirm(\'Void this warranty?\')">
+                                '.$csrf.'
                                 <button type="submit" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-x-circle"></i> ' . e(__('sale.warranty_void')) . '
+                                    <i class="bi bi-x-circle"></i> '.e(__('sale.warranty_void')).'
                                 </button>
                             </form>
                         </div>
                     ';
                 }
+
                 return '<span class="text-muted">-</span>';
             })
             ->rawColumns(['warranty_code_label', 'shop_name_label', 'warranty_period_label', 'status_label', 'actions'])
@@ -141,7 +142,7 @@ class WarrantyController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $shops = Shop::forUser($user)->orderBy('name')->get(['id', 'name']);
 
         $sales = Sale::query()
@@ -159,8 +160,7 @@ class WarrantyController extends Controller
     {
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
-
+        /** @var User $user */
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'sale_id' => 'required|exists:sales,id',
@@ -186,7 +186,7 @@ class WarrantyController extends Controller
         $warranty = SaleWarranty::findOrFail($id);
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         abort_unless($user->ownsShop((int) $warranty->shop_id), 403, 'You do not have access to this shop.');
 
         $this->service->markWarrantyClaimed($id, $request->input('claim_note'));
@@ -203,7 +203,7 @@ class WarrantyController extends Controller
         $warranty = SaleWarranty::findOrFail($id);
         $user = Auth::user();
         abort_unless($user, 401);
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         abort_unless($user->ownsShop((int) $warranty->shop_id), 403, 'You do not have access to this shop.');
 
         $this->service->voidWarranty($id, $request->input('claim_note'));

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'module_access')) {
+        if (! Schema::hasColumn('users', 'module_access')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->json('module_access')->nullable()->after('role');
             });

@@ -14,7 +14,7 @@ class ShopContext
     public function getActiveShopId(): ?int
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -24,11 +24,11 @@ class ShopContext
         }
 
         // Check if there is an explicit shop_id in the request
-        $shopId = request()->route('shop_id') 
+        $shopId = request()->route('shop_id')
             ?? request()->input('shop_id');
 
         // Check if we are viewing a specific shop route (e.g. shops/{id})
-        if (!$shopId && request()->routeIs('shop.*')) {
+        if (! $shopId && request()->routeIs('shop.*')) {
             $shopId = request()->route('shop') ?? request()->route('id');
         }
 
@@ -37,6 +37,7 @@ class ShopContext
             // Verify ownership before caching
             if ($user->ownsShop($shopId)) {
                 Session::put('current_shop_id', $shopId);
+
                 return $shopId;
             }
         }
@@ -51,6 +52,7 @@ class ShopContext
         $firstShopId = $user->shops()->value('id');
         if ($firstShopId) {
             Session::put('current_shop_id', (int) $firstShopId);
+
             return (int) $firstShopId;
         }
 

@@ -14,13 +14,13 @@ return [
     'all_marked_as_read' => 'সব বজঞপত পড হসব চহনত কর হযছ',
     'deleted' => 'বজঞপত সফলভব মছ ফল হযছ',
     'all_read_deleted' => 'সব পড বজঞপত সফলভব মছ ফল হযছ',
-    
+
     // Notification types
     'type_low_stock' => 'কম সটক সতরকত',
     'type_daily_summary' => 'দনক সরশ',
     'type_system_update' => 'সসটম আপডট',
     'type_user_activity' => 'বযবহরকর করযকলপ',
-    
+
     // Notification messages
     'low_stock_message' => 'পণয :product এর সটক কম হয যচছ (:quantity বক আছ)',
     'daily_summary_message' => 'আপনর দনক সরশ রপরট পরসতত',

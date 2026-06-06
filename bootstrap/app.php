@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsureShopOwnership;
+use App\Http\Middleware\EnsureSubscriptionActive;
+use App\Http\Middleware\RestrictDuringMaintenanceMode;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ValidateSubscription;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,18 +19,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\RestrictDuringMaintenanceMode::class,
-            \App\Http\Middleware\EnsureSubscriptionActive::class,
+            SetLocale::class,
+            RestrictDuringMaintenanceMode::class,
+            EnsureSubscriptionActive::class,
         ]);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
-            'module.access' => \App\Http\Middleware\CheckModuleAccess::class,
-            'maintenance.restrict' => \App\Http\Middleware\RestrictDuringMaintenanceMode::class,
-            'shop.owner' => \App\Http\Middleware\EnsureShopOwnership::class,
-            'subscription.active' => \App\Http\Middleware\EnsureSubscriptionActive::class,
-            'subscription.validate' => \App\Http\Middleware\ValidateSubscription::class,
+            'role' => CheckRole::class,
+            'module.access' => CheckModuleAccess::class,
+            'maintenance.restrict' => RestrictDuringMaintenanceMode::class,
+            'shop.owner' => EnsureShopOwnership::class,
+            'subscription.active' => EnsureSubscriptionActive::class,
+            'subscription.validate' => ValidateSubscription::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -47,7 +47,7 @@ class ProductBatch extends TenantModel
                 $label = (string) ($item['label'] ?? $item['field_key'] ?? 'Attribute');
                 $value = (string) ($item['value'] ?? '');
 
-                return trim($label) . ': ' . trim($value);
+                return trim($label).': '.trim($value);
             })
             ->values();
 
