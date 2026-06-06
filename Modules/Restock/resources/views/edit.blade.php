@@ -325,15 +325,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const attributeFieldsWrapper = document.getElementById('attributeFieldsWrapper');
     const attributeFieldsContainer = document.getElementById('attributeFieldsContainer');
     const productsUrl = "{{ route('restock.products-by-shop') }}";
-    const existingBatchAttributes = @json(
-        collect(old('attribute_values', []))->isNotEmpty()
-            ? old('attribute_values', [])
-            : collect($restock->productBatch?->attribute_values ?? [])->mapWithKeys(function ($item) {
-                return [
-                    (string) ($item['field_id'] ?? '') => (string) ($item['value'] ?? ''),
-                ];
-            })->all()
-    );
+
+@php
+    $existingBatchAttributes = collect(old('attribute_values', []))->isNotEmpty()
+        ? old('attribute_values', [])
+        : collect($restock->productBatch?->attribute_values ?? [])->mapWithKeys(function ($item) {
+            return [(string) ($item['field_id'] ?? '') => (string) ($item['value'] ?? '')];
+        })->all();
+@endphp
+
+    const existingBatchAttributes = @json($existingBatchAttributes);
 
     function loadProductsByShop(shopId) {
         const selectedProductId = productSelect.dataset.selectedProductId || '';
