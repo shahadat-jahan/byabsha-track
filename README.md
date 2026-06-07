@@ -266,5 +266,3 @@ Affected file: `Modules/Restock/Services/RestockService.php`
 - **`APP_DEBUG=false`** in production — `.env.example` ships with `true`.
 
 ---
-
-*For support or customisation enquiries, contact the developer via the CodeCanyon profile dashboard.*
